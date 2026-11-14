@@ -6,6 +6,7 @@ import { MARS_GEOGRAPHIC } from "./mars-projection";
 
 export function createRasterLayer(dataset: MarsRasterDataset): ImageLayer<ImageStatic> {
   return new ImageLayer({
+    extent: dataset.extent,
     source: new ImageStatic({
       url: dataset.imageUrl,
       projection: MARS_GEOGRAPHIC,

@@ -10,7 +10,7 @@ node_modules/
 
 # dataset
 *.pgm
-
+*.tif
 
 # Next.js & Build Outputs
 .next/

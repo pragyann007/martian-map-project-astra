@@ -1,16 +1,19 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Navigation } from "lucide-react";
+import { ArrowLeft, Navigation, Map as MapIcon, Sliders } from "lucide-react";
 import MapContainer from "./MapContainer";
 import DatasetPanel from "./DatasetPanel";
 import DatasetInspector from "./DatasetInspector";
 
 export default function VisualizerWorkspace() {
+  const [mobileTab, setMobileTab] = useState<"map" | "sidebar">("map");
+
   return (
-    <div className="min-h-screen bg-[#090A0C] text-[#E8E5DF] flex flex-col font-sans">
+    <div className="h-screen w-screen bg-[#090A0C] text-[#E8E5DF] flex flex-col font-sans overflow-hidden">
       {/* Workspace Header */}
-      <header className="h-14 border-b border-[#17191D] bg-[#090A0C]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-50">
+      <header className="h-14 shrink-0 border-b border-[#17191D] bg-[#090A0C]/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-50">
         <div className="flex items-center space-x-4">
           <Link
             href="/"
@@ -31,7 +34,33 @@ export default function VisualizerWorkspace() {
           </div>
         </div>
 
-        <div className="flex items-center space-x-4 text-xs">
+        <div className="flex items-center space-x-3 text-xs">
+          {/* Mobile view toggle */}
+          <div className="flex lg:hidden rounded bg-[#17191D] p-0.5 border border-[#777C83]/20">
+            <button
+              onClick={() => setMobileTab("map")}
+              className={`px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded transition-colors flex items-center space-x-1 ${
+                mobileTab === "map"
+                  ? "bg-[#C66B3D] text-white"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+            >
+              <MapIcon className="w-3 h-3" />
+              <span>Map</span>
+            </button>
+            <button
+              onClick={() => setMobileTab("sidebar")}
+              className={`px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider rounded transition-colors flex items-center space-x-1 ${
+                mobileTab === "sidebar"
+                  ? "bg-[#C66B3D] text-white"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+            >
+              <Sliders className="w-3 h-3" />
+              <span>Data</span>
+            </button>
+          </div>
+
           <Link
             href="/planner"
             className="hidden md:inline-flex items-center space-x-1.5 text-[#777C83] hover:text-[#E8E5DF] transition-colors uppercase tracking-wider"
@@ -46,9 +75,13 @@ export default function VisualizerWorkspace() {
       </header>
 
       {/* Main Workspace Body */}
-      <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative" style={{ minHeight: "calc(100vh - 3.5rem)" }}>
+      <div className="flex-1 w-full flex flex-col lg:flex-row overflow-hidden relative min-h-0">
         {/* Left Sidebar: Dataset Selection & Inspector */}
-        <aside className="w-full lg:w-96 border-b lg:border-b-0 lg:border-r border-[#17191D] bg-[#090A0C] p-5 flex flex-col justify-between space-y-6 overflow-y-auto z-10 shrink-0">
+        <aside
+          className={`w-full lg:w-96 border-b lg:border-b-0 lg:border-r border-[#17191D] bg-[#090A0C] p-5 flex flex-col justify-between space-y-6 overflow-y-auto z-10 shrink-0 h-full ${
+            mobileTab === "sidebar" ? "block" : "hidden lg:flex"
+          }`}
+        >
           <div className="space-y-6">
             <div>
               <div className="text-[10px] text-[#E9A16A] uppercase tracking-widest mb-1 font-mono font-semibold">
@@ -72,7 +105,7 @@ export default function VisualizerWorkspace() {
           </div>
 
           {/* Provenance Footer */}
-          <div className="pt-4 border-t border-[#17191D] text-[10px] text-[#777C83] leading-relaxed">
+          <div className="pt-4 border-t border-[#17191D] text-[10px] text-[#777C83] leading-relaxed shrink-0">
             <span className="text-[#E9A16A] font-semibold uppercase tracking-wider">
               Data Provenance:
             </span>{" "}
@@ -81,7 +114,11 @@ export default function VisualizerWorkspace() {
         </aside>
 
         {/* Right Map Canvas: OpenLayers Viewport */}
-        <main className="flex-1 w-full h-full min-h-[500px] relative bg-[#090A0C] flex flex-col">
+        <main
+          className={`flex-1 w-full h-full relative overflow-hidden bg-[#090A0C] min-h-0 ${
+            mobileTab === "map" ? "flex" : "hidden lg:flex"
+          }`}
+        >
           <MapContainer />
         </main>
       </div>
