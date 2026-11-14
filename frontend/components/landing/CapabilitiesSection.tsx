@@ -11,7 +11,6 @@ import {
   Compass,
   ChevronLeft,
   ChevronRight,
-  ArrowRight,
 } from "lucide-react";
 
 gsap.registerPlugin(ScrollTrigger);

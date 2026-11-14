@@ -2,12 +2,9 @@
 
 import Link from "next/link";
 import {
-  Compass,
   ArrowLeft,
   CheckCircle2,
   Navigation,
-  AlertTriangle,
-  Play,
 } from "lucide-react";
 
 export default function PlannerPage() {

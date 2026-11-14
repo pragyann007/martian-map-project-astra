@@ -18,6 +18,11 @@ function checkWebGLSupport(): boolean {
   }
 }
 
+function pseudoRandom(seed: number): number {
+  const x = Math.sin(seed * 9301 + 49297) * 233280;
+  return x - Math.floor(x);
+}
+
 function SubtleDistantStars({ count = 600 }: { count?: number }) {
   const { positions, colors } = useMemo(() => {
     const pos = new Float32Array(count * 3);
@@ -28,17 +33,17 @@ function SubtleDistantStars({ count = 600 }: { count?: number }) {
     const faintRust = [0.9, 0.72, 0.6];
 
     for (let i = 0; i < count; i++) {
-      const r = 35 + Math.random() * 30;
-      const theta = Math.random() * Math.PI * 2;
-      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 35 + pseudoRandom(i * 3) * 30;
+      const theta = pseudoRandom(i * 3 + 1) * Math.PI * 2;
+      const phi = Math.acos(2 * pseudoRandom(i * 3 + 2) - 1);
 
       pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
       pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
       pos[i * 3 + 2] = r * Math.cos(phi);
 
-      const roll = Math.random();
+      const roll = pseudoRandom(i * 7);
       const choice = roll > 0.8 ? faintRust : roll > 0.4 ? baseWhite : titanium;
-      const dim = 0.12 + Math.random() * 0.3;
+      const dim = 0.12 + pseudoRandom(i * 11) * 0.3;
 
       col[i * 3] = choice[0] * dim;
       col[i * 3 + 1] = choice[1] * dim;
@@ -84,17 +89,18 @@ function WebGLPosterFallback() {
 }
 
 export default function MarsScene() {
-  const [hasWebGL, setHasWebGL] = useState<boolean | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const [hasWebGL] = useState<boolean>(() =>
+    typeof window !== "undefined" ? checkWebGLSupport() : true
+  );
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
 
   useEffect(() => {
-    setHasWebGL(checkWebGLSupport());
-
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
 
-    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);

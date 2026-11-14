@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, Suspense } from "react";
+import { useRef, Suspense } from "react";
 import * as THREE from "three";
 import { useFrame } from "@react-three/fiber";
 import { useTexture } from "@react-three/drei";
@@ -19,13 +19,16 @@ function TexturedSphere({
   radius: number;
   meshRef: React.RefObject<THREE.Mesh | null>;
 }) {
-  const texture = useTexture("/assets/mars/mars-hero-texture.jpg");
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.ClampToEdgeWrapping;
-  texture.minFilter = THREE.LinearMipmapLinearFilter;
-  texture.magFilter = THREE.LinearFilter;
-  texture.needsUpdate = true;
+  const texture = useTexture("/assets/mars/mars-hero-texture.jpg", (tex) => {
+    if (tex instanceof THREE.Texture) {
+      tex.colorSpace = THREE.SRGBColorSpace;
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.ClampToEdgeWrapping;
+      tex.minFilter = THREE.LinearMipmapLinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.needsUpdate = true;
+    }
+  });
 
   // Jezero Crater coordinates: 18.38° N, 77.58° E
   const latRad = THREE.MathUtils.degToRad(18.38);
