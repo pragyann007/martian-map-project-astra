@@ -115,7 +115,7 @@ export default function VisualizerWorkspace() {
 
         {/* Right Map Canvas: OpenLayers Viewport */}
         <main
-          className={`flex-1 w-full h-full relative overflow-hidden bg-[#090A0C] min-h-0 ${
+          className={`flex-1 w-full h-full relative overflow-hidden bg-[#090A0C] flex flex-col min-h-0 ${
             mobileTab === "map" ? "flex" : "hidden lg:flex"
           }`}
         >

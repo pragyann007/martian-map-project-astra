@@ -153,7 +153,18 @@ export default function MapContainer() {
       resizeObserver.observe(mapElementRef.current);
     }
 
-    // Immediately trigger a fit once the viewport has settled
+    // Trigger an immediate layout sync on next frame
+    requestAnimationFrame(() => {
+      map.updateSize();
+      const size = map.getSize();
+      if (size && size[0] > 50 && size[1] > 50) {
+        initialView.fit(THEMIS_DAY.extent, {
+          size,
+          padding: [32, 32, 32, 32],
+        });
+      }
+    });
+
     const fitTimer = setTimeout(() => {
       map.updateSize();
       const size = map.getSize();
@@ -163,7 +174,7 @@ export default function MapContainer() {
           padding: [32, 32, 32, 32],
         });
       }
-    }, 50);
+    }, 150);
 
     return () => {
       clearTimeout(fitTimer);
@@ -234,14 +245,13 @@ export default function MapContainer() {
   };
 
   return (
-    <div className="relative w-full h-full flex flex-col bg-[#090A0C] overflow-hidden select-none min-h-0">
-      {/* Map Canvas Element — absolute inset-0 guarantees full coverage */}
-      <div className="relative flex-1 w-full h-full min-h-0">
-        <div
-          ref={mapElementRef}
-          className="absolute inset-0 w-full h-full cursor-grab active:cursor-grabbing outline-none"
-        />
-      </div>
+    <div className="relative w-full h-full flex-1 flex flex-col bg-[#090A0C] overflow-hidden select-none min-h-0">
+      {/* Map Canvas Element */}
+      <div
+        ref={mapElementRef}
+        className="w-full h-full flex-1 cursor-grab active:cursor-grabbing outline-none"
+        style={{ width: "100%", height: "100%", minHeight: "450px" }}
+      />
 
       {/* Loading Overlay */}
       {isLoading && (
