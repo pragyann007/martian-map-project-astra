@@ -1,11 +1,5 @@
-import Image from "next/image";
+import { LandingPage } from "@/components/landing/LandingPage";
 
 export default function Home() {
-  return (
-
-    <div className="flex flex-row justify-center items-center w-screen h-screen">
-      Project Astra - Martian Map
-    </div>
-
-  );
+  return <LandingPage />;
 }

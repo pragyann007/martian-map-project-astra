@@ -7,6 +7,11 @@ node_modules/
 .yarn/build-state.yml
 .yarn/install-state.gz
 
+
+# dataset
+*.pgm
+
+
 # Next.js & Build Outputs
 .next/
 out/
@@ -62,6 +67,10 @@ venv/
 .venv/
 ENV/
 *.sqlite3
+
+# Local Data Preparation
+public_data/
+frontend/public_data/
 
 # IDEs & System Files
 .DS_Store
