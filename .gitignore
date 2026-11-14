@@ -8,9 +8,6 @@ node_modules/
 .yarn/install-state.gz
 
 
-# dataset
-*.pgm
-*.tif
 
 # Next.js & Build Outputs
 .next/
