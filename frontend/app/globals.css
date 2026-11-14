@@ -1,26 +1,61 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --color-obsidian: #090A0C;
+    --color-graphite: #17191D;
+    --color-mars-rust: #C66B3D;
+    --color-dust-orange: #E9A16A;
+    --color-starlight: #E8E5DF;
+    --color-titanium: #A3A8B0;
+
+    --background: #090A0C;
+    --foreground: #E8E5DF;
+
+    --font-sans: var(--font-space-grotesk), sans-serif;
+    --font-heading: var(--font-space-grotesk), sans-serif;
+    --font-mono: var(--font-space-grotesk), monospace;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: #090A0C;
+    color: #E8E5DF;
+    font-family: var(--font-space-grotesk), sans-serif;
+  }
+
+  body {
+    background-color: #090A0C;
+    color: #E8E5DF;
+    font-family: var(--font-space-grotesk), sans-serif;
+    letter-spacing: -0.01em;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-space-grotesk), sans-serif;
+    letter-spacing: -0.025em;
+  }
+
+  code, pre, .font-mono {
+    font-family: var(--font-space-grotesk), monospace;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #090A0C;
+}
+::-webkit-scrollbar-thumb {
+  background: #23272E;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #E96A3D;
 }

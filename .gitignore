@@ -63,6 +63,10 @@ venv/
 ENV/
 *.sqlite3
 
+# Local Data Preparation
+public_data/
+frontend/public_data/
+
 # IDEs & System Files
 .DS_Store
 Thumbs.db

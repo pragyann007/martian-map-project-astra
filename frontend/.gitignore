@@ -20,6 +20,10 @@
 # production
 /build
 
+# local data preparation
+public_data/raw/
+public_data/processed/
+
 # misc
 .DS_Store
 *.pem
