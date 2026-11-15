@@ -48,6 +48,7 @@ export default function PlannerStepper() {
   const selectStartPreset = usePlannerStore((s) => s.selectStartPreset);
   const selectHavenPreset = usePlannerStore((s) => s.selectHavenPreset);
   const selectScienceTarget = usePlannerStore((s) => s.selectScienceTarget);
+  const setViewMode = usePlannerStore((s) => s.setViewMode);
 
   const astronaut = usePlannerStore((s) => s.astronaut);
   const updateAstronaut = usePlannerStore((s) => s.updateAstronaut);
@@ -695,6 +696,25 @@ export default function PlannerStepper() {
             <p className="text-xs text-[#777C83] leading-relaxed">
               Compare multi-objective route alternatives. Click any card to highlight its path on the map and animate the rover.
             </p>
+
+            {/* Launch 3D Simulation CTA Banner */}
+            <div className="p-3.5 rounded-xl bg-gradient-to-r from-[#C66B3D]/25 via-[#E9A16A]/15 to-[#17191D] border border-[#E9A16A]/60 shadow-xl flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono uppercase tracking-widest text-[#E9A16A] font-bold block">
+                  Interactive 3D Planetary Simulation
+                </span>
+                <span className="text-xs text-[#E8E5DF] font-semibold block mt-0.5">
+                  Walk or drive this route in 3D Mars terrain
+                </span>
+              </div>
+              <button
+                onClick={() => setViewMode("3d")}
+                className="px-3.5 py-1.5 rounded-lg bg-[#E9A16A] hover:bg-[#E9A16A]/90 text-[#090A0C] font-semibold text-xs uppercase tracking-wider flex items-center space-x-1.5 shadow-md transition-all active:scale-95 shrink-0 ml-2"
+              >
+                <span>Launch 3D</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
 
             {/* Route Cards */}
             <div className="space-y-2.5">
