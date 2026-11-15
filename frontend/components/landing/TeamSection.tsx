@@ -3,6 +3,14 @@
 import Image from "next/image";
 import { Crown, Sparkles, Users, Compass } from "lucide-react";
 
+function LinkedInIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4 fill-current">
+      <path d="M6.94 8.5A1.56 1.56 0 1 1 6.93 5.4a1.56 1.56 0 0 1 .01 3.1ZM5.5 9.8h2.9v8.7H5.5V9.8Zm4.8 0h2.77v1.19h.04c.39-.73 1.33-1.5 2.74-1.5 2.93 0 3.47 1.93 3.47 4.43v6.58h-2.9v-6.16c0-1.47-.03-3.36-2.05-3.36s-2.36 1.6-2.36 3.26v6.26H10.3V9.8Z" />
+    </svg>
+  );
+}
+
 interface TeamMember {
   id: string;
   name: string;
@@ -12,7 +20,7 @@ interface TeamMember {
   avatarGradient: string;
   ringColor: string;
   accentColor: string;
-  orbitalSymbol: string;
+  linkedin: string;
 }
 
 const TEAM_MEMBERS: TeamMember[] = [
@@ -25,7 +33,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     avatarGradient: "from-[#E96A3D] via-[#C66B3D] to-[#8C3A16]",
     ringColor: "border-[#E96A3D] shadow-[0_0_25px_rgba(233,106,61,0.6)]",
     accentColor: "text-[#E9A16A]",
-    orbitalSymbol: "α-LEADER",
+    linkedin: "https://www.linkedin.com/in/princetimilsina/",
   },
   {
     id: "pragyan-thapaliya",
@@ -35,7 +43,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     avatarGradient: "from-[#2A3B50] via-[#1E293B] to-[#0F172A]",
     ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
     accentColor: "text-white/80",
-    orbitalSymbol: "β-MEMBER",
+    linkedin: "https://www.linkedin.com/in/pragyann/",
   },
   {
     id: "prabhat-dhoj-tulachan",
@@ -45,7 +53,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     avatarGradient: "from-[#332211] via-[#1E1B18] to-[#0D0B0A]",
     ringColor: "border-white/30 group-hover:border-[#E96A3D]/80 group-hover:shadow-[0_0_15px_rgba(233,106,61,0.35)]",
     accentColor: "text-white/80",
-    orbitalSymbol: "γ-MEMBER",
+    linkedin: "https://www.linkedin.com/in/prabhat-d-tulachan-0901b2307/",
   },
   {
     id: "yug-pradhan",
@@ -55,7 +63,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     avatarGradient: "from-[#1F2937] via-[#111827] to-[#030712]",
     ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
     accentColor: "text-white/80",
-    orbitalSymbol: "δ-MEMBER",
+    linkedin: "https://www.linkedin.com/in/yug-pradhan-273176321/",
   },
   {
     id: "dripshak-bachhar",
@@ -65,7 +73,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     avatarGradient: "from-[#2E1A47] via-[#1A102E] to-[#0B0614]",
     ringColor: "border-white/30 group-hover:border-[#E96A3D]/80 group-hover:shadow-[0_0_15px_rgba(233,106,61,0.35)]",
     accentColor: "text-white/80",
-    orbitalSymbol: "ε-MEMBER",
+    linkedin: "https://www.linkedin.com/in/dripshak-bachhar-291498326/",
   },
   {
     id: "rijan-maharjan",
@@ -75,7 +83,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     avatarGradient: "from-[#1A2E26] via-[#0E1C17] to-[#050C0A]",
     ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
     accentColor: "text-white/80",
-    orbitalSymbol: "ζ-MEMBER",
+    linkedin: "https://www.linkedin.com/in/rijan-maharjan-862274331/",
   },
 ];
 
@@ -171,21 +179,30 @@ export function TeamSection() {
 
                 {/* Member Info: Name displayed prominently */}
                 <div className="flex-1 min-w-0 space-y-1.5">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-[10px] font-mono uppercase tracking-widest text-[#E9A16A] font-semibold">
-                      {member.orbitalSymbol}
-                    </span>
-                    {member.isOwner && (
+                  {member.isOwner && (
+                    <div className="flex items-center">
                       <span className="inline-flex items-center px-2 py-0.5 rounded-xs text-[10px] font-mono font-bold tracking-widest uppercase bg-[#E96A3D] text-white shadow-sm shadow-[#E96A3D]/40">
                         <Sparkles className="w-3 h-3 mr-1" />
                         TEAM OWNER
                       </span>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  <h3 className="text-xl sm:text-2xl font-heading font-bold text-white tracking-tight truncate group-hover:text-[#E9A16A] transition-colors">
-                    {member.name}
-                  </h3>
+                  <div className="flex items-center justify-between gap-3">
+                    <h3 className="text-xl sm:text-2xl font-heading font-bold text-white tracking-tight truncate group-hover:text-[#E9A16A] transition-colors">
+                      {member.name}
+                    </h3>
+
+                    <a
+                      href={member.linkedin}
+                      target="_blank"
+                      rel="noreferrer"
+                      aria-label={`LinkedIn profile for ${member.name}`}
+                      className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-white/5 text-[#E9A16A] transition hover:border-[#E9A16A]/70 hover:bg-[#E9A16A]/10 hover:text-white"
+                    >
+                      <LinkedInIcon />
+                    </a>
+                  </div>
 
                   <div className="text-xs font-mono text-[#E8E5DF]/70 tracking-wider uppercase">
                     PROJECT ASTRA // RESEARCH & EXPLORATION
