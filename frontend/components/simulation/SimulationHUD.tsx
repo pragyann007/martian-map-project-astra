@@ -9,7 +9,7 @@ import {
   FastForward,
   Video,
   Globe,
-  Compass,
+  Camera,
   Activity,
   AlertTriangle,
   CheckCircle2,
@@ -18,6 +18,9 @@ import {
   Battery,
   Map as MapIcon,
   Sparkles,
+  Layers,
+  Mountain,
+  Grid,
 } from "lucide-react";
 
 export default function SimulationHUD() {
@@ -31,12 +34,16 @@ export default function SimulationHUD() {
   const simProgress = usePlannerStore((s) => s.simProgress);
   const simSpeed = usePlannerStore((s) => s.simSpeed);
   const simCameraMode = usePlannerStore((s) => s.simCameraMode);
+  const simShadingMode = usePlannerStore((s) => s.simShadingMode);
+  const simVerticalExaggeration = usePlannerStore((s) => s.simVerticalExaggeration);
   const simFailureReason = usePlannerStore((s) => s.simFailureReason);
 
   const setSimStatus = usePlannerStore((s) => s.setSimStatus);
   const setSimProgress = usePlannerStore((s) => s.setSimProgress);
   const setSimSpeed = usePlannerStore((s) => s.setSimSpeed);
   const setSimCameraMode = usePlannerStore((s) => s.setSimCameraMode);
+  const setSimShadingMode = usePlannerStore((s) => s.setSimShadingMode);
+  const setSimVerticalExaggeration = usePlannerStore((s) => s.setSimVerticalExaggeration);
 
   const astronaut = usePlannerStore((s) => s.astronaut);
   const activeRoute = routes ? routes[activeStrategy] : null;
@@ -81,12 +88,16 @@ export default function SimulationHUD() {
     else setSimSpeed(1);
   };
 
+  const toggleExaggeration = () => {
+    setSimVerticalExaggeration(simVerticalExaggeration === 1.0 ? 1.4 : 1.0);
+  };
+
   return (
     <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 sm:p-5 z-30 font-sans selection:bg-[#C66B3D]">
       {/* 1. TOP CONTROL BAR */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pointer-events-auto">
-        {/* Left Title & Return to 2D */}
-        <div className="flex items-center space-x-3">
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pointer-events-auto">
+        {/* Left: Return to 2D & Title Badge */}
+        <div className="flex items-center space-x-2.5">
           <button
             onClick={() => setViewMode("2d")}
             className="px-3 py-1.5 rounded-lg bg-[#090A0C]/90 hover:bg-[#17191D] border border-[#777C83]/30 text-xs font-semibold uppercase tracking-wider text-[#E8E5DF] flex items-center space-x-1.5 transition-all shadow-xl backdrop-blur-md"
@@ -95,12 +106,14 @@ export default function SimulationHUD() {
             <span>← 2D Planning Map</span>
           </button>
 
-          <div className="hidden md:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-[#090A0C]/80 border border-[#17191D] backdrop-blur-md text-xs">
+          <div className="hidden xl:flex items-center space-x-2 px-3 py-1.5 rounded-lg bg-[#090A0C]/80 border border-[#17191D] backdrop-blur-md text-xs">
             <span className="w-2 h-2 rounded-full bg-[#E9A16A] animate-ping" />
             <span className="font-heading font-bold text-[#E8E5DF] uppercase tracking-wider">
-              3D Planetary Simulation
+              USGS Jezero 3D Terrain
             </span>
-            <span className="text-[#777C83] font-mono">| Jezero Crater, Mars</span>
+            <span className="text-[#777C83] font-mono text-[10px]">
+              CTX 6m Orthomosaic + USGS DTM
+            </span>
           </div>
         </div>
 
@@ -143,37 +156,120 @@ export default function SimulationHUD() {
           )}
         </div>
 
-        {/* Right: Camera Mode Selector */}
-        <div className="flex items-center bg-[#090A0C]/90 p-1 rounded-xl border border-[#777C83]/30 shadow-2xl backdrop-blur-md text-xs">
+        {/* Right: Camera Modes, Surface Shading & Exaggeration */}
+        <div className="flex items-center space-x-2">
+          {/* Surface Shading Selector */}
+          <div className="flex items-center bg-[#090A0C]/90 p-1 rounded-xl border border-[#777C83]/30 shadow-2xl backdrop-blur-md text-xs">
+            <button
+              onClick={() => setSimShadingMode("ctx")}
+              className={`px-2 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
+                simShadingMode === "ctx"
+                  ? "bg-[#E9A16A] text-[#090A0C]"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+              title="USGS CTX 6m satellite photography drape"
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span className="hidden md:inline text-[10px] uppercase">CTX Drape</span>
+            </button>
+
+            <button
+              onClick={() => setSimShadingMode("elevation")}
+              className={`px-2 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
+                simShadingMode === "elevation"
+                  ? "bg-[#E9A16A] text-[#090A0C]"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+              title="DTM elevation relief color ramp"
+            >
+              <Mountain className="w-3.5 h-3.5" />
+              <span className="hidden md:inline text-[10px] uppercase">Elevation</span>
+            </button>
+
+            <button
+              onClick={() => setSimShadingMode("slope")}
+              className={`px-2 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
+                simShadingMode === "slope"
+                  ? "bg-[#E9A16A] text-[#090A0C]"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+              title="Slope hazard classification (>18° cliff warning)"
+            >
+              <ShieldAlert className="w-3.5 h-3.5" />
+              <span className="hidden md:inline text-[10px] uppercase">Slope</span>
+            </button>
+
+            <button
+              onClick={() => setSimShadingMode("wireframe")}
+              className={`px-2 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
+                simShadingMode === "wireframe"
+                  ? "bg-[#E9A16A] text-[#090A0C]"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+              title="Topographic wireframe grid"
+            >
+              <Grid className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* Vertical Relief Exaggeration Toggle */}
           <button
-            onClick={() => setSimCameraMode("chase")}
-            className={`px-2.5 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
-              simCameraMode === "chase"
-                ? "bg-[#38BDF8] text-[#090A0C]"
-                : "text-[#777C83] hover:text-[#E8E5DF]"
+            onClick={toggleExaggeration}
+            className={`px-2.5 py-1.5 rounded-xl border text-[11px] font-mono font-bold transition-all backdrop-blur-md shadow-xl ${
+              simVerticalExaggeration > 1.0
+                ? "bg-[#E9A16A]/20 border-[#E9A16A] text-[#E9A16A]"
+                : "bg-[#090A0C]/90 border-[#777C83]/30 text-[#777C83] hover:text-[#E8E5DF]"
             }`}
-            title="Astronaut Follow Cam"
+            title="Toggle Visual Vertical Exaggeration (Does not alter route calculations)"
           >
-            <Video className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline text-[11px] uppercase">Chase Cam</span>
+            {simVerticalExaggeration.toFixed(1)}x RELIEF
           </button>
 
-          <button
-            onClick={() => setSimCameraMode("orbit")}
-            className={`px-2.5 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
-              simCameraMode === "orbit"
-                ? "bg-[#38BDF8] text-[#090A0C]"
-                : "text-[#777C83] hover:text-[#E8E5DF]"
-            }`}
-            title="Free Orbit Camera"
-          >
-            <Globe className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline text-[11px] uppercase">Orbit</span>
-          </button>
+          {/* Camera Mode Selector */}
+          <div className="flex items-center bg-[#090A0C]/90 p-1 rounded-xl border border-[#777C83]/30 shadow-2xl backdrop-blur-md text-xs">
+            <button
+              onClick={() => setSimCameraMode("chase")}
+              className={`px-2.5 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
+                simCameraMode === "chase"
+                  ? "bg-[#38BDF8] text-[#090A0C]"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+              title="Third-person rover chase camera"
+            >
+              <Video className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-[11px] uppercase">Chase</span>
+            </button>
+
+            <button
+              onClick={() => setSimCameraMode("cockpit")}
+              className={`px-2.5 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
+                simCameraMode === "cockpit"
+                  ? "bg-[#38BDF8] text-[#090A0C]"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+              title="First-person rover MastCam cockpit camera"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-[11px] uppercase">Cockpit</span>
+            </button>
+
+            <button
+              onClick={() => setSimCameraMode("orbit")}
+              className={`px-2.5 py-1 rounded-lg font-semibold flex items-center space-x-1 transition-all ${
+                simCameraMode === "orbit"
+                  ? "bg-[#38BDF8] text-[#090A0C]"
+                  : "text-[#777C83] hover:text-[#E8E5DF]"
+              }`}
+              title="Free inspection orbit camera"
+            >
+              <Globe className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline text-[11px] uppercase">Orbit</span>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* 2. MIDDLE ALERT BANNER (The Core Demonstration) */}
+      {/* 2. MIDDLE ALERT BANNER & LIVE TELEMETRY */}
       <div className="flex items-start justify-between gap-4 pointer-events-none mt-2">
         {/* Left: Experiment Guidance Box */}
         <div className="max-w-sm pointer-events-auto bg-[#090A0C]/90 border border-[#777C83]/30 p-3.5 rounded-xl shadow-2xl backdrop-blur-md space-y-2">
@@ -219,17 +315,22 @@ export default function SimulationHUD() {
                 <span>Mission Success: Habitat Reached!</span>
               </div>
               <p className="text-[10px] leading-relaxed text-[#E8E5DF]">
-                Astronaut successfully reached destination with {currentO2Remaining.toFixed(1)} L of reserve oxygen intact.
+                Explorer successfully reached destination with {currentO2Remaining.toFixed(1)} L of reserve oxygen intact.
               </p>
             </div>
           )}
+
+          {/* Scientific Attribution Footnote */}
+          <div className="pt-1.5 border-t border-[#17191D] text-[9px] text-[#55595F] font-mono leading-tight">
+            Data: USGS Astrogeology / NASA JPL CTX Mosaic (6m) & USGS Jezero DTM (20m)
+          </div>
         </div>
 
         {/* Right: Live Telemetry HUD Gauges */}
         <div className="pointer-events-auto bg-[#090A0C]/90 border border-[#777C83]/30 p-3.5 rounded-xl shadow-2xl backdrop-blur-md space-y-3 min-w-[200px]">
           <div className="flex items-center justify-between border-b border-[#17191D] pb-1.5">
             <span className="text-[10px] uppercase tracking-wider text-[#777C83] font-semibold">
-              Live Suit Telemetry
+              Live Mission Telemetry
             </span>
             <span className="text-[10px] font-mono text-[#4ADE80] uppercase">
               {simStatus === "playing" ? "TRACKING" : "STANDBY"}
@@ -274,7 +375,7 @@ export default function SimulationHUD() {
           {/* Slope Inclinometer */}
           <div className="flex items-center justify-between text-xs font-mono">
             <span className="text-[#777C83] font-sans flex items-center space-x-1">
-              <Compass className="w-3.5 h-3.5 text-[#E9A16A]" />
+              <Mountain className="w-3.5 h-3.5 text-[#E9A16A]" />
               <span>Terrain Incline</span>
             </span>
             <span

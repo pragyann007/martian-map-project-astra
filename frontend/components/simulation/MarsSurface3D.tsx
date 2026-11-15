@@ -6,8 +6,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, Html } from "@react-three/drei";
 
 import { usePlannerStore } from "@/lib/state/planner-store";
-import { lonLatToWorldMeters } from "@/lib/domain/mars-math";
-import type { Point3D, LonLat, Strategy } from "@/lib/domain/types";
+import { TerrainCoordinateAdapter } from "@/lib/terrain/terrain-coordinate-adapter";
+import type { Strategy } from "@/lib/domain/types";
 import { Astronaut3D } from "./Astronaut3D";
 import { Rover3D } from "./Rover3D";
 import { EnhancedTerrain3D } from "./EnhancedTerrain3D";
@@ -27,22 +27,12 @@ function isWebGLSupported(): boolean {
 
 // Scale: 1 unit in 3D = 25 meters on Mars
 export const SIM_SCALE = 0.04;
-const BASE_ELEVATION_M = -2600;
-
-export function toSimCoords(p: Point3D, origin: LonLat): [number, number, number] {
-  const [x, , z] = lonLatToWorldMeters(p, origin);
-  const y = (p.elevM - BASE_ELEVATION_M) * 1.4; // 1.4x subtle vertical relief exaggeration
-  return [x * SIM_SCALE, y * SIM_SCALE, z * SIM_SCALE];
-}
+export const BASE_ELEVATION_M = -2600;
 
 // ---------------------------------------------------------------------------
-// 1. 3D Route Splines (Active + Alternatives)
+// 1. 3D Route Splines Draped over USGS DTM (Active + Alternatives)
 // ---------------------------------------------------------------------------
-function RouteSplines({
-  origin,
-}: {
-  origin: LonLat;
-}) {
+function RouteSplines({ adapter }: { adapter: TerrainCoordinateAdapter }) {
   const routes = usePlannerStore((s) => s.routes);
   const activeStrategy = usePlannerStore((s) => s.activeStrategy);
 
@@ -57,17 +47,19 @@ function RouteSplines({
         if (!r || !r.found || r.coordinates3d.length < 2) return null;
 
         const isSelected = strat === activeStrategy;
+
+        // Drape every coordinate over the real USGS DTM height
         const pts = r.coordinates3d.map((pt) => {
-          const [x, y, z] = toSimCoords(pt, origin);
-          return new THREE.Vector3(x, y + 0.6, z); // slight ground offset
+          const v = adapter.lonLatToScene(pt, pt.elevM);
+          return new THREE.Vector3(v.x, v.y + (isSelected ? 0.45 : 0.25), v.z);
         });
 
         const curve = new THREE.CatmullRomCurve3(pts);
         const tubeGeo = new THREE.TubeGeometry(
           curve,
-          Math.min(pts.length * 3, 200),
+          Math.min(pts.length * 4, 300),
           isSelected ? 0.35 : 0.12,
-          6,
+          8,
           false
         );
 
@@ -77,23 +69,27 @@ function RouteSplines({
               <meshStandardMaterial
                 color={r.color}
                 emissive={r.color}
-                emissiveIntensity={isSelected ? 0.8 : 0.25}
-                roughness={0.3}
+                emissiveIntensity={isSelected ? 0.85 : 0.25}
+                roughness={0.25}
                 transparent
-                opacity={isSelected ? 0.95 : 0.4}
+                opacity={isSelected ? 0.95 : 0.35}
               />
             </mesh>
 
-            {/* Critical Scarp Warning Marker on Shortest Path */}
+            {/* Critical Scarp Warning Marker on Shortest Path (Delta Cliff > 20°) */}
             {strat === "shortest" && r.metrics && r.metrics.maxSlopeDeg > 20 && (
               <group position={pts[Math.floor(pts.length * 0.45)]}>
-                <mesh position={[0, 3, 0]}>
+                <mesh position={[0, 3.5, 0]}>
                   <octahedronGeometry args={[1.2]} />
-                  <meshStandardMaterial color="#D9452B" emissive="#D9452B" emissiveIntensity={0.8} />
+                  <meshStandardMaterial
+                    color="#D9452B"
+                    emissive="#D9452B"
+                    emissiveIntensity={0.9}
+                  />
                 </mesh>
-                <Html position={[0, 4.5, 0]} center distanceFactor={40}>
-                  <div className="px-2 py-0.5 rounded bg-[#D9452B] text-white font-mono text-[10px] font-bold shadow-lg border border-white/40 whitespace-nowrap animate-pulse">
-                    ⚠️ 26.4° SCARP CLIFF
+                <Html position={[0, 5.2, 0]} center distanceFactor={45}>
+                  <div className="px-2.5 py-1 rounded bg-[#D9452B] text-white font-mono text-[10px] font-bold shadow-xl border border-white/50 whitespace-nowrap animate-pulse">
+                    ⚠️ 26.4° SCARP CLIFF HAZARD
                   </div>
                 </Html>
               </group>
@@ -106,9 +102,9 @@ function RouteSplines({
 }
 
 // ---------------------------------------------------------------------------
-// 3. 3D Science Exploration Target Beacons
+// 2. 3D Science Exploration Target Beacons
 // ---------------------------------------------------------------------------
-function ScienceBeacons({ origin }: { origin: LonLat }) {
+function ScienceBeacons({ adapter }: { adapter: TerrainCoordinateAdapter }) {
   const scienceTargets = usePlannerStore((s) => s.scienceTargets);
   const selectedTargetId = usePlannerStore((s) => s.selectedTargetId);
   const selectScienceTarget = usePlannerStore((s) => s.selectScienceTarget);
@@ -116,14 +112,11 @@ function ScienceBeacons({ origin }: { origin: LonLat }) {
   return (
     <group>
       {scienceTargets.map((target, idx) => {
-        const [x, y, z] = toSimCoords(
-          { lon: target.location.lon, lat: target.location.lat, elevM: target.elevationM },
-          origin
-        );
+        const pos = adapter.lonLatToScene(target.location, target.elevationM);
         const isSelected = target.id === selectedTargetId;
 
         return (
-          <group key={target.id} position={[x, y, z]}>
+          <group key={target.id} position={[pos.x, pos.y, pos.z]}>
             {/* Hologram Light Pillar */}
             <mesh position={[0, 6, 0]}>
               <cylinderGeometry args={[0.2, 0.6, 12, 12]} />
@@ -147,7 +140,7 @@ function ScienceBeacons({ origin }: { origin: LonLat }) {
             </mesh>
 
             {/* Interactive 3D Label */}
-            <Html position={[0, 14, 0]} center distanceFactor={50}>
+            <Html position={[0, 14.5, 0]} center distanceFactor={50}>
               <div
                 onClick={() => selectScienceTarget(target.id)}
                 className={`p-1.5 rounded-lg border backdrop-blur-md cursor-pointer transition-all whitespace-nowrap shadow-xl ${
@@ -175,12 +168,57 @@ function ScienceBeacons({ origin }: { origin: LonLat }) {
 }
 
 // ---------------------------------------------------------------------------
-// 4. Procedural 3D Mars Astronaut Character & Simulation Physics
+// 3. Habitat / Start Base Camp Marker & Destination Refuge
 // ---------------------------------------------------------------------------
-function AstronautAgent({
-  origin,
+function HabitatBaseMarker({ adapter }: { adapter: TerrainCoordinateAdapter }) {
+  const startPoint = usePlannerStore((s) => s.startPoint);
+  const destinationPoint = usePlannerStore((s) => s.destinationPoint);
+
+  const startPos = adapter.lonLatToScene(startPoint);
+  const destPos = adapter.lonLatToScene(destinationPoint);
+
+  return (
+    <group>
+      {/* Start Base Hab */}
+      <group position={[startPos.x, startPos.y, startPos.z]}>
+        <mesh position={[0, 1.2, 0]}>
+          <cylinderGeometry args={[2.5, 3.2, 2.4, 16]} />
+          <meshStandardMaterial color="#E8E5DF" metalness={0.3} roughness={0.4} />
+        </mesh>
+        <Html position={[0, 3.8, 0]} center distanceFactor={40}>
+          <div className="px-2 py-0.5 rounded bg-[#38BDF8] text-[#090A0C] font-mono text-[10px] font-bold shadow-lg border border-white/50 whitespace-nowrap">
+            BASE HAB: OCTAVIA BUTLER
+          </div>
+        </Html>
+      </group>
+
+      {/* Destination Haven */}
+      <group position={[destPos.x, destPos.y, destPos.z]}>
+        <mesh position={[0, 1.2, 0]}>
+          <cylinderGeometry args={[2.2, 2.8, 2.4, 16]} />
+          <meshStandardMaterial
+            color="#E9A16A"
+            emissive="#E9A16A"
+            emissiveIntensity={0.25}
+          />
+        </mesh>
+        <Html position={[0, 3.8, 0]} center distanceFactor={40}>
+          <div className="px-2 py-0.5 rounded bg-[#E9A16A] text-[#090A0C] font-mono text-[10px] font-bold shadow-lg border border-white/50 whitespace-nowrap">
+            DESTINATION REFUGE
+          </div>
+        </Html>
+      </group>
+    </group>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// 4. Rover & Astronaut Mission Simulation Agent
+// ---------------------------------------------------------------------------
+function MissionSimulationAgent({
+  adapter,
 }: {
-  origin: LonLat;
+  adapter: TerrainCoordinateAdapter;
 }) {
   const routes = usePlannerStore((s) => s.routes);
   const activeStrategy = usePlannerStore((s) => s.activeStrategy);
@@ -192,38 +230,47 @@ function AstronautAgent({
   const simCameraMode = usePlannerStore((s) => s.simCameraMode);
   const astronaut = usePlannerStore((s) => s.astronaut);
 
-  const groupRef = useRef<THREE.Group>(null);
+  const roverRef = useRef<THREE.Group>(null);
+  const astronautRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
   const activeRoute = routes ? routes[activeStrategy] : null;
 
-  // Build 3D spline curve for movement
+  // Build high-resolution 3D spline curve for the active route
   const spline = useMemo(() => {
-    if (!activeRoute || !activeRoute.found || activeRoute.coordinates3d.length < 2) return null;
-    const pts = activeRoute.coordinates3d.map((pt) => {
-      const [x, y, z] = toSimCoords(pt, origin);
-      return new THREE.Vector3(x, y + 0.4, z);
-    });
-    return new THREE.CatmullRomCurve3(pts);
-  }, [activeRoute, origin]);
+    if (!activeRoute || !activeRoute.found || activeRoute.coordinates3d.length < 2)
+      return null;
 
-  // Animation frame loop
+    const pts = activeRoute.coordinates3d.map((pt) => {
+      const v = adapter.lonLatToScene(pt, pt.elevM);
+      return new THREE.Vector3(v.x, v.y + 0.1, v.z);
+    });
+
+    return new THREE.CatmullRomCurve3(pts);
+  }, [activeRoute, adapter]);
+
+  // Main animation frame loop
   useFrame((_, delta) => {
-    if (!spline || !groupRef.current) return;
+    if (!spline || !roverRef.current) return;
 
     if (simStatus === "playing") {
       const totalDuration = activeRoute?.metrics?.estimatedDurationSec ?? 300;
-      const progressDelta = (delta * simSpeed * 4) / Math.max(20, totalDuration / 10);
+      const progressDelta =
+        (delta * simSpeed * 4) / Math.max(20, totalDuration / 10);
       const nextProgress = Math.min(1, simProgress + progressDelta);
 
-      // Check oxygen burn and critical hypoxia
+      // Evaluate life support & cliff hypoxia fail condition
       if (activeRoute?.metrics?.profile) {
-        const profIdx = Math.floor(nextProgress * (activeRoute.metrics.profile.length - 1));
+        const profIdx = Math.floor(
+          nextProgress * (activeRoute.metrics.profile.length - 1)
+        );
         const currentProfile = activeRoute.metrics.profile[profIdx];
 
-        // Shortest route cliff fail condition
         if (currentProfile && currentProfile.o2RemainingL <= 0) {
-          setSimStatus("failed", "CRITICAL HYPOXIA: Oxygen fully exhausted attempting to scale 26° delta cliff!");
+          setSimStatus(
+            "failed",
+            "CRITICAL HYPOXIA: Oxygen fully exhausted attempting to scale vertical delta cliff!"
+          );
           return;
         }
       }
@@ -236,26 +283,72 @@ function AstronautAgent({
       }
     }
 
-    // Position astronaut along spline
+    // 1. Compute Rover 3D position & forward tangent
     const pos = spline.getPointAt(simProgress);
     const tangent = spline.getTangentAt(simProgress).normalize();
 
-    groupRef.current.position.copy(pos);
-    const lookTarget = pos.clone().add(tangent);
-    groupRef.current.lookAt(lookTarget);
+    // 2. Query terrain surface normal at rover location to align pitch & roll
+    const currentLonLat = adapter.sceneToLonLat(pos);
+    const surfaceNormal = adapter.sampleNormal(currentLonLat);
 
-    // Stride bobbing
-    if (simStatus === "playing") {
-      const bob = Math.sin(simProgress * 120) * 0.15;
-      groupRef.current.position.y += bob;
+    // Compute coordinate frame: Z = forward, Y = up (terrain normal), X = right
+    const forward = tangent.clone();
+    const up = surfaceNormal.clone();
+    const right = new THREE.Vector3().crossVectors(up, forward).normalize();
+    const correctedUp = new THREE.Vector3().crossVectors(forward, right).normalize();
+
+    const rotMatrix = new THREE.Matrix4().makeBasis(right, correctedUp, forward);
+    roverRef.current.position.copy(pos);
+    roverRef.current.quaternion.setFromRotationMatrix(rotMatrix);
+
+    // 3. Position accompanying Astronaut alongside the rover
+    if (astronautRef.current) {
+      const astroOffset = right.clone().multiplyScalar(2.2);
+      const astroPos = pos.clone().add(astroOffset);
+      astronautRef.current.position.copy(astroPos);
+      astronautRef.current.lookAt(astroPos.clone().add(forward));
+
+      // Walk cycle stride bobbing
+      if (simStatus === "playing") {
+        const bob = Math.sin(simProgress * 140) * 0.12;
+        astronautRef.current.position.y += bob;
+      }
     }
 
-    // Camera follow mode (Third Person Chase)
+    // 4. Camera Modes
     if (simCameraMode === "chase") {
-      const camOffset = tangent.clone().multiplyScalar(-18).add(new THREE.Vector3(0, 10, 0));
+      // Third-person chase camera positioned behind and above the rover
+      const camOffset = forward
+        .clone()
+        .multiplyScalar(-14)
+        .add(correctedUp.clone().multiplyScalar(5.5));
       const targetCamPos = pos.clone().add(camOffset);
       camera.position.lerp(targetCamPos, 0.08);
-      camera.lookAt(pos.clone().add(new THREE.Vector3(0, 2, 0)));
+
+      const lookAhead = pos
+        .clone()
+        .add(forward.clone().multiplyScalar(10))
+        .add(correctedUp.clone().multiplyScalar(1.5));
+      camera.lookAt(lookAhead);
+    } else if (simCameraMode === "cockpit") {
+      // First-person MastCam viewpoint from the rover's mast looking forward
+      const cockpitOffset = forward
+        .clone()
+        .multiplyScalar(0.7)
+        .add(correctedUp.clone().multiplyScalar(1.8));
+      const cockpitCamPos = pos.clone().add(cockpitOffset);
+      camera.position.lerp(cockpitCamPos, 0.25);
+
+      const lookAhead = pos
+        .clone()
+        .add(forward.clone().multiplyScalar(25))
+        .add(correctedUp.clone().multiplyScalar(1.4));
+      camera.lookAt(lookAhead);
+    } else if (simCameraMode === "topdown") {
+      // Tactical overhead satellite view
+      const overheadPos = pos.clone().add(new THREE.Vector3(0, 50, 0));
+      camera.position.lerp(overheadPos, 0.08);
+      camera.lookAt(pos);
     }
   });
 
@@ -265,64 +358,31 @@ function AstronautAgent({
   const isCompleted = simStatus === "completed";
 
   return (
-    <group ref={groupRef}>
-      <Astronaut3D
-        scale={0.85}
-        isMoving={simStatus === "playing"}
-        isFailed={isFailed}
-        isCompleted={isCompleted}
-        showBadge={true}
-        name={astronaut.name}
-        oxygenLevel={Math.max(
-          0,
-          100 - simProgress * (activeStrategy === "shortest" ? 100 : 35)
-        )}
-      />
-    </group>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// 5. Habitat / Start Base Camp Marker & Robotic Rover
-// ---------------------------------------------------------------------------
-function HabitatBaseMarker({ origin }: { origin: LonLat }) {
-  const startPoint = usePlannerStore((s) => s.startPoint);
-  const destinationPoint = usePlannerStore((s) => s.destinationPoint);
-
-  const [sx, sy, sz] = toSimCoords({ lon: startPoint.lon, lat: startPoint.lat, elevM: -2570 }, origin);
-  const [dx, dy, dz] = toSimCoords({ lon: destinationPoint.lon, lat: destinationPoint.lat, elevM: -2515 }, origin);
-
-  return (
     <group>
-      {/* Start Base Hab */}
-      <group position={[sx, sy, sz]}>
-        <mesh position={[0, 1.2, 0]}>
-          <cylinderGeometry args={[2.5, 3.2, 2.4, 16]} />
-          <meshStandardMaterial color="#E8E5DF" metalness={0.3} roughness={0.4} />
-        </mesh>
-        <Html position={[0, 3.5, 0]} center distanceFactor={40}>
-          <div className="px-2 py-0.5 rounded bg-[#38BDF8] text-[#090A0C] font-mono text-[10px] font-bold shadow-lg border border-white/50">
-            BASE HAB
-          </div>
-        </Html>
+      {/* 1. Autonomous Mars Rover */}
+      <group ref={roverRef}>
+        <Rover3D
+          scale={0.8}
+          name="Astra Jezero Explorer"
+          showBadge={true}
+          isDriving={simStatus === "playing"}
+        />
       </group>
 
-      {/* Autonomous Scout Rover at Base */}
-      <group position={[sx + 5, sy, sz + 3]}>
-        <Rover3D scale={0.75} name="Astra Rover-1" showBadge={true} isDriving={false} />
-      </group>
-
-      {/* Destination Haven */}
-      <group position={[dx, dy, dz]}>
-        <mesh position={[0, 1.2, 0]}>
-          <cylinderGeometry args={[2.2, 2.8, 2.4, 16]} />
-          <meshStandardMaterial color="#E9A16A" emissive="#E9A16A" emissiveIntensity={0.2} />
-        </mesh>
-        <Html position={[0, 3.5, 0]} center distanceFactor={40}>
-          <div className="px-2 py-0.5 rounded bg-[#E9A16A] text-[#090A0C] font-mono text-[10px] font-bold shadow-lg border border-white/50">
-            DESTINATION REFUGE
-          </div>
-        </Html>
+      {/* 2. Mission Astronaut on EVA */}
+      <group ref={astronautRef}>
+        <Astronaut3D
+          scale={0.8}
+          isMoving={simStatus === "playing"}
+          isFailed={isFailed}
+          isCompleted={isCompleted}
+          showBadge={true}
+          name={astronaut.name}
+          oxygenLevel={Math.max(
+            0,
+            100 - simProgress * (activeStrategy === "shortest" ? 100 : 35)
+          )}
+        />
       </group>
     </group>
   );
@@ -335,15 +395,20 @@ export default function MarsSurface3D() {
   const terrain = usePlannerStore((s) => s.terrain);
   const grid = terrain.grid;
   const simCameraMode = usePlannerStore((s) => s.simCameraMode);
+  const simShadingMode = usePlannerStore((s) => s.simShadingMode);
+  const simVerticalExaggeration = usePlannerStore((s) => s.simVerticalExaggeration);
+
   const [hasWebGL] = useState<boolean>(() => isWebGLSupported());
 
-  const origin = useMemo<LonLat>(() => {
-    if (!grid) return { lon: 77.4297, lat: 18.4661 };
-    return {
-      lon: (grid.west + grid.east) / 2,
-      lat: (grid.south + grid.north) / 2,
-    };
-  }, [grid]);
+  // Geodetic Coordinate Adapter
+  const adapter = useMemo(() => {
+    if (!grid) return null;
+    return new TerrainCoordinateAdapter(grid, {
+      simScale: SIM_SCALE,
+      verticalExaggeration: simVerticalExaggeration,
+      baseElevationM: BASE_ELEVATION_M,
+    });
+  }, [grid, simVerticalExaggeration]);
 
   if (!hasWebGL) {
     return (
@@ -363,12 +428,12 @@ export default function MarsSurface3D() {
     );
   }
 
-  if (!grid) {
+  if (!grid || !adapter) {
     return (
       <div className="w-full h-full flex items-center justify-center bg-[#090A0C] text-[#E9A16A] font-mono text-xs">
         <div className="flex items-center space-x-2">
           <div className="w-2.5 h-2.5 rounded-full bg-[#E9A16A] animate-ping" />
-          <span>Reconstructing 3D Jezero Topography from USGS DEM...</span>
+          <span>Reconstructing 3D Jezero Topography from USGS DTM & CTX Imagery...</span>
         </div>
       </div>
     );
@@ -377,50 +442,59 @@ export default function MarsSurface3D() {
   return (
     <div className="w-full h-full relative select-none">
       <Canvas
-        camera={{ position: [0, 45, 65], fov: 45, near: 0.5, far: 3000 }}
+        camera={{ position: [0, 45, 65], fov: 45, near: 0.5, far: 3500 }}
         shadows
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
         className="w-full h-full bg-[#090A0C]"
       >
         {/* Martian Atmosphere Fog & Sky */}
         <color attach="background" args={["#1A0B05"]} />
-        <fog attach="fog" args={["#2E1408", 40, 450]} />
+        <fog attach="fog" args={["#2E1408", 50, 1000]} />
 
         {/* Sunlight & Ambient Lighting */}
         <ambientLight intensity={0.55} color="#FCE7D0" />
         <directionalLight
-          position={[120, 150, 80]}
+          position={[120, 160, 80]}
           intensity={1.8}
           color="#FFE2C4"
           castShadow
           shadow-mapSize-width={1024}
           shadow-mapSize-height={1024}
         />
-        <directionalLight position={[-80, 40, -60]} intensity={0.35} color="#8B3A1C" />
+        <directionalLight
+          position={[-90, 50, -70]}
+          intensity={0.35}
+          color="#8B3A1C"
+        />
 
-        {/* 1. Enhanced Rocky DEM Terrain */}
-        <EnhancedTerrain3D grid={grid} origin={origin} />
+        {/* 1. Real USGS Jezero Crater Topography Mesh with CTX Orthomosaic */}
+        <EnhancedTerrain3D
+          grid={grid}
+          adapter={adapter}
+          shadingMode={simShadingMode}
+          wireframe={simShadingMode === "wireframe"}
+        />
 
         {/* 2. Base & Destination Markers */}
-        <HabitatBaseMarker origin={origin} />
+        <HabitatBaseMarker adapter={adapter} />
 
         {/* 3. 3D Route Splines */}
-        <RouteSplines origin={origin} />
+        <RouteSplines adapter={adapter} />
 
         {/* 4. Science Beacons */}
-        <ScienceBeacons origin={origin} />
+        <ScienceBeacons adapter={adapter} />
 
-        {/* 5. Animated Astronaut Agent */}
-        <AstronautAgent origin={origin} />
+        {/* 5. Animated Rover & Astronaut Mission Agent */}
+        <MissionSimulationAgent adapter={adapter} />
 
-        {/* Camera Controls (Disabled in chase mode to let camera track astronaut) */}
-        {simCameraMode !== "chase" && (
+        {/* Camera Controls (Enabled in Orbit mode) */}
+        {simCameraMode === "orbit" && (
           <OrbitControls
             enableDamping
             dampingFactor={0.08}
-            maxPolarAngle={Math.PI / 2 - 0.05} // don't dip below terrain
-            minDistance={8}
-            maxDistance={350}
+            maxPolarAngle={Math.PI / 2 - 0.04} // Clamped so camera never clips beneath terrain
+            minDistance={6}
+            maxDistance={500}
           />
         )}
       </Canvas>
