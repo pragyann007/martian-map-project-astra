@@ -14,6 +14,8 @@ import { createTrekWmtsSource } from "./trek-source";
 export function createDatasetLayer(dataset: MarsDataset): Layer {
   let layer: Layer;
 
+  const layerZIndex = dataset.zIndex ?? (dataset.isBaseMap ? 1 : 10);
+
   if (dataset.sourceType === "wmts") {
     layer = new TileLayer({
       extent: dataset.extent,
@@ -24,7 +26,7 @@ export function createDatasetLayer(dataset: MarsDataset): Layer {
         datasetId: dataset.id,
         isBaseMap: Boolean(dataset.isBaseMap),
       },
-      zIndex: dataset.isBaseMap ? 1 : 5,
+      zIndex: layerZIndex,
     });
   } else {
     // Local pre-processed raster layer
@@ -42,7 +44,7 @@ export function createDatasetLayer(dataset: MarsDataset): Layer {
         datasetId: dataset.id,
         isBaseMap: false,
       },
-      zIndex: 6,
+      zIndex: layerZIndex,
     });
   }
 

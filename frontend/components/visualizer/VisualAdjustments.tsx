@@ -32,16 +32,16 @@ export default function VisualAdjustments({ dataset }: VisualAdjustmentsProps) {
   };
 
   return (
-    <div className="space-y-3.5 p-3 rounded-lg bg-[#0E1015] border border-[#17191D] text-xs">
-      <div className="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-[#E9A16A]">
+    <div className="space-y-3 p-3 rounded-md bg-[#101315] border border-[#292F32] text-xs">
+      <div className="flex items-center justify-between text-xs font-semibold text-[#E7E9E8]">
         <span className="flex items-center space-x-1.5">
-          <Sliders className="w-3.5 h-3.5" />
-          <span>Image Processing & Blending</span>
+          <Sliders className="w-3.5 h-3.5 text-[#D97943]" />
+          <span>Image Adjustments</span>
         </span>
         <button
           onClick={handleReset}
           title="Reset to default rendering"
-          className="text-[10px] text-[#777C83] hover:text-[#E8E5DF] transition-colors flex items-center space-x-1"
+          className="text-[10px] text-[#929B9E] hover:text-[#E7E9E8] transition-colors flex items-center space-x-1"
         >
           <RotateCcw className="w-3 h-3" />
           <span>Reset</span>
@@ -50,29 +50,29 @@ export default function VisualAdjustments({ dataset }: VisualAdjustmentsProps) {
 
       {/* Blend Mode Selection */}
       <div className="space-y-1">
-        <label className="text-[10px] text-[#777C83] uppercase tracking-wider flex items-center space-x-1">
-          <Blend className="w-3 h-3 text-[#E9A16A]" />
-          <span>Scientific Blend Mode</span>
+        <label className="text-[10px] text-[#929B9E] font-medium flex items-center space-x-1">
+          <Blend className="w-3 h-3 text-[#D97943]" />
+          <span>Composite Blend Mode</span>
         </label>
         <select
           value={blendMode}
           onChange={(e) => setLayerBlendMode(dataset.id, e.target.value as BlendMode)}
           aria-label="Layer Blend Mode"
-          className="w-full bg-[#090A0C] border border-[#777C83]/30 rounded px-2 py-1.5 text-xs text-[#E8E5DF] focus:outline-none focus:border-[#C66B3D] transition-colors cursor-pointer"
+          className="w-full bg-[#0B0D0E] border border-[#292F32] rounded px-2.5 py-1.5 text-xs text-[#E7E9E8] focus:outline-none focus:border-[#D97943] transition-colors cursor-pointer"
         >
           <option value="normal">Normal (Direct Sensor Overlay)</option>
           <option value="multiply">Multiply (Pan-Sharpen with Base Map)</option>
           <option value="luminosity">Luminosity (Modulate Natural Color)</option>
-          <option value="screen">Screen (Enhance Dark Shadowed Terrain)</option>
-          <option value="overlay">Overlay (High Contrast Relief)</option>
+          <option value="screen">Screen (Lighten Dark Shadowed Regions)</option>
+          <option value="overlay">Overlay (Enhanced Relief Contrast)</option>
         </select>
       </div>
 
       {/* Opacity Slider */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-[10px] text-[#777C83]">
-          <span>Layer Opacity</span>
-          <span className="font-mono text-[#E8E5DF]">{Math.round(opacity * 100)}%</span>
+        <div className="flex items-center justify-between text-[11px] text-[#929B9E]">
+          <span>Opacity</span>
+          <span className="font-mono text-[#E7E9E8]">{Math.round(opacity * 100)}%</span>
         </div>
         <input
           type="range"
@@ -81,18 +81,18 @@ export default function VisualAdjustments({ dataset }: VisualAdjustmentsProps) {
           step="0.05"
           value={opacity}
           onChange={(e) => setLayerOpacity(dataset.id, parseFloat(e.target.value))}
-          className="w-full h-1 bg-[#17191D] rounded appearance-none cursor-pointer accent-[#C66B3D]"
+          className="w-full h-1 bg-[#292F32] rounded appearance-none cursor-pointer accent-[#D97943]"
         />
       </div>
 
       {/* Brightness Slider */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-[10px] text-[#777C83]">
+        <div className="flex items-center justify-between text-[11px] text-[#929B9E]">
           <span className="flex items-center space-x-1">
-            <Sun className="w-2.5 h-2.5 text-[#E9A16A]" />
+            <Sun className="w-2.5 h-2.5 text-[#D97943]" />
             <span>Brightness</span>
           </span>
-          <span className="font-mono text-[#E8E5DF]">{Math.round(brightness * 100)}%</span>
+          <span className="font-mono text-[#E7E9E8]">{Math.round(brightness * 100)}%</span>
         </div>
         <input
           type="range"
@@ -101,18 +101,18 @@ export default function VisualAdjustments({ dataset }: VisualAdjustmentsProps) {
           step="0.05"
           value={brightness}
           onChange={(e) => setLayerBrightness(dataset.id, parseFloat(e.target.value))}
-          className="w-full h-1 bg-[#17191D] rounded appearance-none cursor-pointer accent-[#C66B3D]"
+          className="w-full h-1 bg-[#292F32] rounded appearance-none cursor-pointer accent-[#D97943]"
         />
       </div>
 
       {/* Contrast Slider */}
       <div className="space-y-1">
-        <div className="flex items-center justify-between text-[10px] text-[#777C83]">
+        <div className="flex items-center justify-between text-[11px] text-[#929B9E]">
           <span className="flex items-center space-x-1">
-            <Contrast className="w-2.5 h-2.5 text-[#E9A16A]" />
+            <Contrast className="w-2.5 h-2.5 text-[#D97943]" />
             <span>Contrast</span>
           </span>
-          <span className="font-mono text-[#E8E5DF]">{Math.round(contrast * 100)}%</span>
+          <span className="font-mono text-[#E7E9E8]">{Math.round(contrast * 100)}%</span>
         </div>
         <input
           type="range"
@@ -121,7 +121,7 @@ export default function VisualAdjustments({ dataset }: VisualAdjustmentsProps) {
           step="0.05"
           value={contrast}
           onChange={(e) => setLayerContrast(dataset.id, parseFloat(e.target.value))}
-          className="w-full h-1 bg-[#17191D] rounded appearance-none cursor-pointer accent-[#C66B3D]"
+          className="w-full h-1 bg-[#292F32] rounded appearance-none cursor-pointer accent-[#D97943]"
         />
       </div>
     </div>

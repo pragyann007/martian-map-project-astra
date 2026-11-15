@@ -10,6 +10,8 @@ import { HeroSection } from "./HeroSection";
 import { MissionSection } from "./MissionSection";
 import { JezeroSection } from "./JezeroSection";
 import { CapabilitiesSection } from "./CapabilitiesSection";
+import { PastExplorationSection } from "./PastExplorationSection";
+import { TeamSection } from "./TeamSection";
 import { FinalCTA } from "./FinalCTA";
 import { Footer } from "./Footer";
 import { usePlanetScrollStore, INITIAL_TRANSFORM } from "./planetScrollStore";
@@ -79,13 +81,35 @@ export function LandingPage() {
         opacity: 1.0,
       };
 
-      // Final CTA (4): Mars glides back to center-bottom forming a majestic planetary horizon
+      // Past Exploration (4): Mars positioned smoothly on left-center while timeline & Perseverance unfold
+      const pastState = {
+        x: -1.4,
+        y: 0.08,
+        z: 0.0,
+        scale: 0.78,
+        rotY: 4.2,
+        rotX: 0.05,
+        opacity: 1.0,
+      };
+
+      // Project Astra Team (5): Mars glides smoothly to the right, balancing crew cards
+      const teamState = {
+        x: 1.35,
+        y: -0.05,
+        z: 0.0,
+        scale: 0.82,
+        rotY: 4.9,
+        rotX: 0.0,
+        opacity: 1.0,
+      };
+
+      // Final CTA (6): Mars glides back to center-bottom forming a majestic planetary horizon
       const ctaState = {
         x: 0.0,
         y: -0.85,
         z: 0.0,
         scale: 1.35,
-        rotY: 4.5,
+        rotY: 5.6,
         rotX: 0.0,
         opacity: 1.0,
       };
@@ -151,7 +175,49 @@ export function LandingPage() {
         },
       });
 
-      // 4. Transition: Capabilities -> Final CTA
+      // 4. Transition: Capabilities -> Past Exploration
+      ScrollTrigger.create({
+        trigger: "#past-exploration",
+        start: "top bottom",
+        end: "top top",
+        scrub: 1,
+        onUpdate: (self) => {
+          const p = self.progress;
+          if (p > 0) {
+            setSection(p > 0.5 ? 4 : 3);
+            setTransform({
+              x: lerp(capabilitiesState.x, pastState.x, p),
+              y: lerp(capabilitiesState.y, pastState.y, p),
+              scale: lerp(capabilitiesState.scale, pastState.scale, p),
+              rotY: lerp(capabilitiesState.rotY, pastState.rotY, p),
+              rotX: lerp(capabilitiesState.rotX, pastState.rotX, p),
+            });
+          }
+        },
+      });
+
+      // 5. Transition: Past Exploration -> Project Astra Team
+      ScrollTrigger.create({
+        trigger: "#team",
+        start: "top bottom",
+        end: "top top",
+        scrub: 1,
+        onUpdate: (self) => {
+          const p = self.progress;
+          if (p > 0) {
+            setSection(p > 0.5 ? 5 : 4);
+            setTransform({
+              x: lerp(pastState.x, teamState.x, p),
+              y: lerp(pastState.y, teamState.y, p),
+              scale: lerp(pastState.scale, teamState.scale, p),
+              rotY: lerp(pastState.rotY, teamState.rotY, p),
+              rotX: lerp(pastState.rotX, teamState.rotX, p),
+            });
+          }
+        },
+      });
+
+      // 6. Transition: Team -> Final CTA
       ScrollTrigger.create({
         trigger: "#explore",
         start: "top bottom",
@@ -160,13 +226,13 @@ export function LandingPage() {
         onUpdate: (self) => {
           const p = self.progress;
           if (p > 0) {
-            setSection(p > 0.5 ? 4 : 3);
+            setSection(p > 0.5 ? 6 : 5);
             setTransform({
-              x: lerp(capabilitiesState.x, ctaState.x, p),
-              y: lerp(capabilitiesState.y, ctaState.y, p),
-              scale: lerp(capabilitiesState.scale, ctaState.scale, p),
-              rotY: lerp(capabilitiesState.rotY, ctaState.rotY, p),
-              rotX: lerp(capabilitiesState.rotX, ctaState.rotX, p),
+              x: lerp(teamState.x, ctaState.x, p),
+              y: lerp(teamState.y, ctaState.y, p),
+              scale: lerp(teamState.scale, ctaState.scale, p),
+              rotY: lerp(teamState.rotY, ctaState.rotY, p),
+              rotX: lerp(teamState.rotX, ctaState.rotX, p),
             });
           }
         },
@@ -202,7 +268,13 @@ export function LandingPage() {
         {/* Section 3: Exploration Capabilities — Mars shifts left, capabilities on right */}
         <CapabilitiesSection />
 
-        {/* Section 4: Final Call to Action — Mars curves on bottom horizon */}
+        {/* Section 4: Past Exploration — Humanity's Journey to Mars & Perseverance Spotlight */}
+        <PastExplorationSection />
+
+        {/* Section 5: PROJECT ASTRA — Dedicated Team Section */}
+        <TeamSection />
+
+        {/* Section 6: Final Call to Action — Mars curves on bottom horizon */}
         <FinalCTA />
 
         {/* Provenance & Attributions Footer */}

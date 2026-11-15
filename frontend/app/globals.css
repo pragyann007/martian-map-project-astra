@@ -23,7 +23,6 @@
   }
 
   html {
-    scroll-behavior: smooth;
     background-color: #090A0C;
     color: #E8E5DF;
     font-family: var(--font-space-grotesk), sans-serif;
@@ -60,3 +59,48 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #E96A3D;
 }
+
+/* Lenis Smooth Scrolling Styles */
+html.lenis, html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-scrolling iframe {
+  pointer-events: none;
+}
+
+/* Mars Custom Cursor Active State (Only for fine pointer desktop) */
+@media (hover: hover) and (pointer: fine) {
+  html.custom-cursor-active,
+  html.custom-cursor-active body,
+  html.custom-cursor-active a,
+  html.custom-cursor-active button,
+  html.custom-cursor-active input,
+  html.custom-cursor-active select,
+  html.custom-cursor-active textarea,
+  html.custom-cursor-active label,
+  html.custom-cursor-active [role="button"],
+  html.custom-cursor-active .cursor-pointer {
+    cursor: none !important;
+  }
+}
+
+/* Custom Cursor Responsive & Accessibility Handling */
+@media (hover: none), (pointer: coarse), (prefers-reduced-motion: reduce) {
+  .custom-mars-cursor {
+    display: none !important;
+  }
+}
+

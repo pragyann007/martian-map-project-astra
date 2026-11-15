@@ -1,11 +1,15 @@
 import { create } from "zustand";
 import type { BlendMode } from "@/lib/data/dataset.types";
 
+export type VisualizerTab = "layers" | "landmarks" | "details" | "telemetry";
+
 interface VisualizerState {
   // Base map & Overlay IDs
   activeBaseMapId: string;
   activeOverlayId: string;
+  selectedDatasetId: string;
   activeInspectorDatasetId: string;
+  hoveredDatasetId: string | null;
 
   // Layer rendering state
   visibleLayers: string[];
@@ -21,14 +25,20 @@ interface VisualizerState {
   selectedLandmarkId: string | null;
   landmarkNonce: number;
 
-  // Workspace layout
+  // Workspace layout & readiness
   isSidebarOpen: boolean;
-  activeSidebarTab: "layers" | "telemetry" | "landmarks";
+  activeSidebarTab: VisualizerTab;
+  isMapReady: boolean;
+  baseMapError: string | null;
 
   // Actions
   setBaseMap: (id: string) => void;
   setOverlay: (id: string) => void;
+  toggleOverlay: (id: string) => void;
   toggleLayer: (id: string) => void;
+  setSelectedDataset: (id: string) => void;
+  setHoveredDataset: (id: string | null) => void;
+
   setLayerOpacity: (id: string, opacity: number) => void;
   setLayerBrightness: (id: string, brightness: number) => void;
   setLayerContrast: (id: string, contrast: number) => void;
@@ -41,8 +51,10 @@ interface VisualizerState {
   flyToLandmark: (id: string) => void;
 
   setSidebarOpen: (open: boolean | ((prev: boolean) => boolean)) => void;
-  setActiveSidebarTab: (tab: "layers" | "telemetry" | "landmarks") => void;
+  setActiveSidebarTab: (tab: VisualizerTab) => void;
   setInspectorDataset: (id: string) => void;
+  setIsMapReady: (ready: boolean) => void;
+  setBaseMapError: (error: string | null) => void;
 
   // Backwards compatibility aliases
   activeDatasetId: string;
@@ -50,31 +62,35 @@ interface VisualizerState {
   setActiveDataset: (id: string) => void;
 }
 
+const BASEMAP_IDS = ["viking-mdim21", "mola-clrshade"];
+
 export const useVisualizerStore = create<VisualizerState>((set) => ({
   // Default: Viking Planetary Color as base, CTX 6m as high-res overlay
   activeBaseMapId: "viking-mdim21",
   activeOverlayId: "jez-ctx",
+  selectedDatasetId: "jez-ctx",
   activeInspectorDatasetId: "jez-ctx",
+  hoveredDatasetId: null,
 
   // Both the global Viking color basemap AND CTX high-res overlay are active by default
   visibleLayers: ["viking-mdim21", "jez-ctx"],
 
   layerOpacity: {
     "viking-mdim21": 1.0,
-    "mola-clrshade": 0.85,
-    "jez-ctx": 0.95,
+    "mola-clrshade": 1.0,
+    "jez-ctx": 0.85,
     "jez-hirise": 1.0,
-    "jez-regional-visible": 0.95,
+    "jez-regional-visible": 0.9,
     "themis-day-wmts": 0.85,
     "themis-night-wmts": 0.85,
-    "themis-day": 0.9,
+    "themis-day": 0.85,
   },
 
   layerBrightness: {
     "viking-mdim21": 1.0,
-    "mola-clrshade": 1.05,
-    "jez-ctx": 1.05,
-    "jez-hirise": 1.05,
+    "mola-clrshade": 1.0,
+    "jez-ctx": 1.0,
+    "jez-hirise": 1.0,
     "jez-regional-visible": 1.0,
     "themis-day-wmts": 1.0,
     "themis-night-wmts": 1.0,
@@ -83,12 +99,12 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
 
   layerContrast: {
     "viking-mdim21": 1.0,
-    "mola-clrshade": 1.1,
-    "jez-ctx": 1.15,
-    "jez-hirise": 1.2,
-    "jez-regional-visible": 1.05,
-    "themis-day-wmts": 1.1,
-    "themis-night-wmts": 1.1,
+    "mola-clrshade": 1.0,
+    "jez-ctx": 1.0,
+    "jez-hirise": 1.0,
+    "jez-regional-visible": 1.0,
+    "themis-day-wmts": 1.0,
+    "themis-night-wmts": 1.0,
     "themis-day": 1.0,
   },
 
@@ -105,23 +121,27 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
 
   showGraticule: true,
   showLandmarks: true,
-  showFootprints: true,
+  showFootprints: false, // subtle / contextual by default to avoid clutter
   selectedLandmarkId: null,
   landmarkNonce: 0,
 
   isSidebarOpen: true,
   activeSidebarTab: "layers",
+  isMapReady: false,
+  baseMapError: null,
 
-  // Set the planetary base map (Viking / MOLA / None)
+  // Set the planetary base map (Viking / MOLA)
   setBaseMap: (id) =>
     set((state) => {
-      const basemapIds = ["viking-mdim21", "mola-clrshade"];
-      // Remove previous basemaps from visible layers
-      const withoutBasemaps = state.visibleLayers.filter((l) => !basemapIds.includes(l));
-      const nextVisible = id === "none" ? withoutBasemaps : [...withoutBasemaps, id];
+      // Remove any previous basemap from visible layers
+      const withoutBasemaps = state.visibleLayers.filter((l) => !BASEMAP_IDS.includes(l));
+      const nextVisible = id === "none" ? withoutBasemaps : [id, ...withoutBasemaps];
       return {
         activeBaseMapId: id,
+        selectedDatasetId: id,
+        activeInspectorDatasetId: id,
         visibleLayers: nextVisible,
+        baseMapError: null,
       };
     }),
 
@@ -133,18 +153,50 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
         : [...state.visibleLayers, id];
       return {
         activeOverlayId: id,
+        selectedDatasetId: id,
         activeInspectorDatasetId: id,
         activeDatasetId: id,
         visibleLayers: nextVisible,
       };
     }),
 
-  toggleLayer: (id) =>
-    set((state) => ({
-      visibleLayers: state.visibleLayers.includes(id)
+  // Toggle an overlay on / off
+  toggleOverlay: (id) =>
+    set((state) => {
+      const isVisible = state.visibleLayers.includes(id);
+      const nextVisible = isVisible
         ? state.visibleLayers.filter((layerId) => layerId !== id)
-        : [...state.visibleLayers, id],
-    })),
+        : [...state.visibleLayers, id];
+      return {
+        visibleLayers: nextVisible,
+        activeOverlayId: isVisible ? state.activeOverlayId : id,
+      };
+    }),
+
+  toggleLayer: (id) =>
+    set((state) => {
+      if (BASEMAP_IDS.includes(id)) {
+        // Toggling a base map
+        const isCurrent = state.activeBaseMapId === id;
+        const targetId = isCurrent ? "none" : id;
+        const withoutBasemaps = state.visibleLayers.filter((l) => !BASEMAP_IDS.includes(l));
+        const nextVisible = targetId === "none" ? withoutBasemaps : [targetId, ...withoutBasemaps];
+        return {
+          activeBaseMapId: targetId,
+          visibleLayers: nextVisible,
+        };
+      }
+      return {
+        visibleLayers: state.visibleLayers.includes(id)
+          ? state.visibleLayers.filter((layerId) => layerId !== id)
+          : [...state.visibleLayers, id],
+      };
+    }),
+
+  setSelectedDataset: (id) =>
+    set({ selectedDatasetId: id, activeInspectorDatasetId: id, activeDatasetId: id }),
+
+  setHoveredDataset: (id) => set({ hoveredDatasetId: id }),
 
   setLayerOpacity: (id, opacity) =>
     set((state) => ({
@@ -201,10 +253,18 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
       isSidebarOpen: typeof val === "function" ? val(state.isSidebarOpen) : val,
     })),
 
-  setActiveSidebarTab: (tab) => set({ activeSidebarTab: tab }),
+  setActiveSidebarTab: (tab) =>
+    set({ activeSidebarTab: tab }),
 
   setInspectorDataset: (id) =>
-    set({ activeInspectorDatasetId: id, activeDatasetId: id }),
+    set({
+      selectedDatasetId: id,
+      activeInspectorDatasetId: id,
+      activeDatasetId: id,
+    }),
+
+  setIsMapReady: (ready) => set({ isMapReady: ready }),
+  setBaseMapError: (error) => set({ baseMapError: error }),
 
   // Backwards compatibility
   activeDatasetId: "jez-ctx",
@@ -215,11 +275,16 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
         : [...state.visibleLayers, id];
       return {
         activeOverlayId: id,
+        selectedDatasetId: id,
         activeInspectorDatasetId: id,
         activeDatasetId: id,
         visibleLayers: nextVisible,
       };
     }),
   setActiveDataset: (id) =>
-    set({ activeInspectorDatasetId: id, activeDatasetId: id }),
+    set({
+      selectedDatasetId: id,
+      activeInspectorDatasetId: id,
+      activeDatasetId: id,
+    }),
 }));

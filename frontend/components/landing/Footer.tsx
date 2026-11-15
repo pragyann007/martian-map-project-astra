@@ -1,17 +1,24 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer() {
   return (
     <footer className="w-full bg-[#090A0C] border-t border-white/20 py-16 text-[#E8E5DF] text-xs">
       <div className="max-w-6xl mx-auto px-6 sm:px-10">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 pb-12 border-b border-white/20">
-          {/* Brand Info */}
-          <div className="space-y-3">
-            <div className="text-[#FFFFFF] font-heading font-bold text-sm tracking-[0.2em] uppercase">
-              MARTIAN MAP
-            </div>
+          {/* Brand Info with Logo */}
+          <div className="space-y-4">
+            <Link href="/" className="inline-block" aria-label="Project Astra Home">
+              <Image
+                src="/logomain-white.png"
+                alt="Project Astra"
+                width={130}
+                height={34}
+                className="h-7 w-auto object-contain hover:brightness-125 transition-all"
+              />
+            </Link>
             <p className="text-xs text-[#E8E5DF] leading-relaxed">
               Interplanetary exploration guide and dataset visualizer for
               Jezero Crater, Mars. Developed for the NASA Space Apps Challenge 2026.
@@ -49,6 +56,22 @@ export function Footer() {
                   className="text-[#E8E5DF] hover:text-[#FFFFFF] transition-colors"
                 >
                   Geospatial Capabilities
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#past-exploration"
+                  className="text-[#E8E5DF] hover:text-[#E9A16A] transition-colors"
+                >
+                  Past Exploration & Perseverance
+                </a>
+              </li>
+              <li>
+                <a
+                  href="#team"
+                  className="text-[#E8E5DF] hover:text-[#E9A16A] transition-colors"
+                >
+                  Project Astra Team
                 </a>
               </li>
               <li>
@@ -99,7 +122,7 @@ export function Footer() {
         {/* Bottom Credits */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] uppercase tracking-wider text-[#E8E5DF]/70">
           <div>
-            © 2026 Martian Map • NASA Space Apps Challenge 2026
+            © 2026 Project Astra • Martian Map • NASA Space Apps Challenge 2026
           </div>
           <div className="flex items-center space-x-3 text-[#E9A16A] font-medium">
             <span>OBSERVED</span>

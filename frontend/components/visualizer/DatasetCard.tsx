@@ -3,17 +3,7 @@
 import { useState } from "react";
 import type { MarsDataset } from "@/lib/data/dataset.types";
 import { useVisualizerStore } from "@/lib/state/visualizer-store";
-import VisualAdjustments from "./VisualAdjustments";
-import {
-  Globe,
-  HardDrive,
-  Eye,
-  EyeOff,
-  Sliders,
-  ChevronDown,
-  ChevronUp,
-  Info,
-} from "lucide-react";
+import { Eye, EyeOff, Sliders, ArrowUpRight } from "lucide-react";
 
 interface DatasetCardProps {
   dataset: MarsDataset;
@@ -23,157 +13,138 @@ interface DatasetCardProps {
 
 export default function DatasetCard({ dataset, isActive, onSelect }: DatasetCardProps) {
   const visibleLayers = useVisualizerStore((state) => state.visibleLayers);
-  const toggleLayer = useVisualizerStore((state) => state.toggleLayer);
+  const toggleOverlay = useVisualizerStore((state) => state.toggleOverlay);
   const setInspectorDataset = useVisualizerStore((state) => state.setInspectorDataset);
   const setActiveSidebarTab = useVisualizerStore((state) => state.setActiveSidebarTab);
-  const layerBlendMode = useVisualizerStore((state) => state.layerBlendMode);
+  const setHoveredDataset = useVisualizerStore((state) => state.setHoveredDataset);
 
-  const [showAdjustments, setShowAdjustments] = useState<boolean>(true);
+  const layerOpacity = useVisualizerStore((state) => state.layerOpacity);
+  const setLayerOpacity = useVisualizerStore((state) => state.setLayerOpacity);
+
+  const [isOpacityOpen, setIsOpacityOpen] = useState(false);
 
   if (!dataset) return null;
 
   const isVisible = (visibleLayers || []).includes(dataset.id);
-  const resolution = dataset.resolutionMeters ?? "N/A";
-  const currentBlend = layerBlendMode[dataset.id] ?? "normal";
+  const opacity = layerOpacity[dataset.id] ?? dataset.defaultOpacity ?? 1;
 
-  const getSpectralBadge = () => {
-    switch (dataset.spectralType) {
-      case "panchromatic":
-        return { label: "Panchromatic (500–800nm)", color: "text-[#A3A8B0] border-[#777C83]/30" };
-      case "thermal":
-        return { label: "Thermal IR (100m)", color: "text-[#E27D60] border-[#E27D60]/30" };
-      case "color":
-        return { label: "Visual Color", color: "text-[#E9A16A] border-[#C66B3D]/30" };
-      case "altimetry":
-        return { label: "Laser Altimetry", color: "text-emerald-400 border-emerald-500/30" };
-      default:
-        return { label: "Planetary Observation", color: "text-[#777C83] border-[#777C83]/20" };
-    }
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    toggleOverlay(dataset.id);
   };
 
-  const badge = getSpectralBadge();
-
-  const handleInspectTelemetry = (e: React.MouseEvent) => {
+  const handleInspect = (e: React.MouseEvent) => {
     e.stopPropagation();
     setInspectorDataset(dataset.id);
-    setActiveSidebarTab("telemetry");
-  };
-
-  const handleToggleVisibility = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    toggleLayer(dataset.id);
+    setActiveSidebarTab("details");
   };
 
   return (
     <div
       onClick={onSelect}
-      className={`rounded-lg border transition-all cursor-pointer ${
+      onMouseEnter={() => setHoveredDataset(dataset.id)}
+      onMouseLeave={() => setHoveredDataset(null)}
+      className={`group rounded-md border transition-all text-xs cursor-pointer select-none ${
         isActive
-          ? "bg-[#17191D] border-[#C66B3D] shadow-lg shadow-[#C66B3D]/10"
-          : "bg-[#17191D]/50 border-[#17191D] hover:border-[#777C83]/30"
+          ? "bg-[#171B1D] border-[#D97943]/60 shadow-md"
+          : "bg-[#101315] border-[#292F32] hover:border-[#929B9E]/40"
       }`}
     >
-      <div className="p-3">
-        {/* Top Header: Indicator + Title + Resolution */}
-        <div className="flex items-start justify-between gap-2">
-          <div className="space-y-1 min-w-0">
-            <div className="flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={handleToggleVisibility}
-                title={isVisible ? "Hide layer on map" : "Show layer on map"}
-                className={`p-1 rounded transition-colors ${
-                  isVisible
-                    ? "text-[#E9A16A] bg-[#C66B3D]/20 hover:bg-[#C66B3D]/30"
-                    : "text-[#777C83] bg-[#090A0C] hover:text-[#E8E5DF]"
-                }`}
-              >
-                {isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-              </button>
+      <div className="p-2.5 flex items-center justify-between gap-2.5">
+        {/* Visibility Checkbox & Eye */}
+        <button
+          type="button"
+          onClick={handleToggle}
+          title={isVisible ? `Hide ${dataset.shortName}` : `Show ${dataset.shortName}`}
+          aria-label={isVisible ? `Hide ${dataset.shortName}` : `Show ${dataset.shortName}`}
+          className={`p-1.5 rounded transition-colors shrink-0 flex items-center justify-center ${
+            isVisible
+              ? "text-[#D97943] bg-[#D97943]/15 hover:bg-[#D97943]/25"
+              : "text-[#60686B] hover:text-[#E7E9E8] bg-[#0B0D0E]"
+          }`}
+        >
+          {isVisible ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
+        </button>
 
-              <h3 className="text-xs font-semibold text-[#E8E5DF] tracking-wide truncate">
-                {dataset.shortName || dataset.name}
-              </h3>
-            </div>
-
-            {/* Subtitle details */}
-            <div className="flex items-center flex-wrap gap-x-2 gap-y-1 text-[10px] text-[#777C83] pl-6">
-              <span>{dataset.instrument}</span>
-              <span>•</span>
-              <span>{dataset.mission}</span>
-              <span>•</span>
-              <span className="inline-flex items-center space-x-1 text-[#A3A8B0]">
-                {dataset.sourceType === "wmts" ? (
-                  <>
-                    <Globe className="w-2.5 h-2.5 text-[#E9A16A]" />
-                    <span>NASA Trek</span>
-                  </>
-                ) : (
-                  <>
-                    <HardDrive className="w-2.5 h-2.5 text-[#A3A8B0]" />
-                    <span>Local Raster</span>
-                  </>
-                )}
-              </span>
-            </div>
+        {/* Dataset Title & Metadata */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center space-x-1.5">
+            <span
+              className={`font-medium truncate ${
+                isVisible ? "text-[#E7E9E8]" : "text-[#929B9E]"
+              }`}
+            >
+              {dataset.shortName || dataset.name}
+            </span>
           </div>
 
-          <div className="flex flex-col items-end gap-1 shrink-0">
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#090A0C] border border-[#777C83]/30 text-[#E9A16A]">
-              {resolution} m/px
-            </span>
-            {currentBlend !== "normal" && (
-              <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-[#C66B3D]/20 text-[#E9A16A] border border-[#C66B3D]/30">
-                {currentBlend}
-              </span>
+          <div className="flex items-center space-x-1.5 text-[11px] text-[#929B9E] font-mono mt-0.5">
+            <span>{dataset.instrument}</span>
+            <span>•</span>
+            <span>{dataset.resolutionMeters} m/px</span>
+            {dataset.sourceType === "local-raster" && (
+              <>
+                <span>•</span>
+                <span className="text-[#D97943]">Local</span>
+              </>
             )}
           </div>
         </div>
 
-        {/* Spectral Tag & Telemetry Link */}
-        <div className="mt-2.5 pt-2 border-t border-[#090A0C] flex items-center justify-between text-[10px]">
-          <span className={`px-1.5 py-0.5 rounded font-mono border text-[9px] ${badge.color}`}>
-            {badge.label}
-          </span>
-
-          <div className="flex items-center space-x-2">
+        {/* Action Buttons: Quick Opacity & Details Link */}
+        <div className="flex items-center space-x-1 shrink-0">
+          {isVisible && (
             <button
-              onClick={handleInspectTelemetry}
-              className="text-[#777C83] hover:text-[#E9A16A] flex items-center space-x-1 transition-colors"
-              title="Inspect scientific metadata and bandwidth"
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsOpacityOpen((prev) => !prev);
+              }}
+              title="Adjust Opacity"
+              aria-label="Adjust Opacity"
+              className={`p-1.5 rounded transition-colors text-[11px] font-mono flex items-center space-x-1 ${
+                isOpacityOpen
+                  ? "bg-[#292F32] text-[#E7E9E8]"
+                  : "text-[#929B9E] hover:text-[#E7E9E8] hover:bg-[#171B1D]"
+              }`}
             >
-              <Info className="w-3 h-3" />
-              <span>Specs</span>
+              <Sliders className="w-3 h-3 text-[#D97943]" />
+              <span>{Math.round(opacity * 100)}%</span>
             </button>
+          )}
 
-            {isActive && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowAdjustments((prev) => !prev);
-                }}
-                className="text-[#777C83] hover:text-[#E8E5DF] flex items-center space-x-0.5 transition-colors"
-                title="Toggle visual tuning controls"
-              >
-                <Sliders className="w-3 h-3 text-[#E9A16A]" />
-                {showAdjustments ? (
-                  <ChevronUp className="w-3 h-3" />
-                ) : (
-                  <ChevronDown className="w-3 h-3" />
-                )}
-              </button>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={handleInspect}
+            title="View Scientific Details"
+            aria-label={`View details for ${dataset.name}`}
+            className="p-1.5 rounded text-[#929B9E] hover:text-[#D97943] hover:bg-[#171B1D] transition-colors"
+          >
+            <ArrowUpRight className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
 
-      {/* Visual Adjustments Accordion (when active and expanded) */}
-      {isActive && showAdjustments && (
+      {/* Quick Opacity Inline Slider */}
+      {isVisible && isOpacityOpen && (
         <div
-          className="border-t border-[#090A0C] p-3 bg-[#090A0C]/40 rounded-b-lg"
+          className="px-3 pb-2.5 pt-1 border-t border-[#292F32]/60 bg-[#0B0D0E]/50 flex items-center space-x-3 text-[11px]"
           onClick={(e) => e.stopPropagation()}
         >
-          <VisualAdjustments dataset={dataset} />
+          <span className="text-[#929B9E] shrink-0 font-mono">Opacity</span>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.05"
+            value={opacity}
+            onChange={(e) => setLayerOpacity(dataset.id, parseFloat(e.target.value))}
+            aria-label={`${dataset.name} Opacity`}
+            className="w-full h-1 bg-[#292F32] rounded appearance-none cursor-pointer accent-[#D97943]"
+          />
+          <span className="font-mono text-[#E7E9E8] shrink-0 w-8 text-right">
+            {Math.round(opacity * 100)}%
+          </span>
         </div>
       )}
     </div>

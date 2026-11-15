@@ -17,40 +17,45 @@ export default function LayerControls({ dataset }: LayerControlsProps) {
   if (!dataset) return null;
 
   const isVisible = (visibleLayers || []).includes(dataset.id);
-  const opacity = (layerOpacity && layerOpacity[dataset.id] !== undefined)
-    ? layerOpacity[dataset.id]
-    : (dataset.defaultOpacity ?? 1);
+  const opacity =
+    layerOpacity && layerOpacity[dataset.id] !== undefined
+      ? layerOpacity[dataset.id]
+      : (dataset.defaultOpacity ?? 1);
 
   return (
-    <div className="space-y-3 pt-2">
+    <div className="space-y-2.5 pt-1.5 text-xs">
       {/* Visibility Toggle */}
-      <div className="flex items-center justify-between text-xs">
-        <label className="flex items-center space-x-2 cursor-pointer text-[#E8E5DF] hover:text-white transition-colors">
+      <div className="flex items-center justify-between">
+        <label className="flex items-center space-x-2 cursor-pointer text-[#E7E9E8] hover:text-white transition-colors">
           <input
             type="checkbox"
             checked={isVisible}
             onChange={() => toggleLayer(dataset.id)}
-            className="w-4 h-4 rounded border-[#777C83] bg-[#090A0C] text-[#C66B3D] focus:ring-1 focus:ring-[#C66B3D] cursor-pointer"
+            className="w-3.5 h-3.5 rounded border-[#292F32] bg-[#0B0D0E] text-[#D97943] focus:ring-1 focus:ring-[#D97943] cursor-pointer"
           />
           <span className="font-medium">Layer Visibility</span>
         </label>
         <button
           onClick={() => toggleLayer(dataset.id)}
-          className="text-[#777C83] hover:text-[#E8E5DF] transition-colors p-1"
+          className="text-[#929B9E] hover:text-[#E7E9E8] transition-colors p-1"
           title={isVisible ? "Hide layer" : "Show layer"}
         >
-          {isVisible ? <Eye className="w-3.5 h-3.5 text-[#E9A16A]" /> : <EyeOff className="w-3.5 h-3.5" />}
+          {isVisible ? (
+            <Eye className="w-3.5 h-3.5 text-[#D97943]" />
+          ) : (
+            <EyeOff className="w-3.5 h-3.5" />
+          )}
         </button>
       </div>
 
       {/* Opacity Slider */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between text-[11px] text-[#777C83]">
+      <div className="space-y-1">
+        <div className="flex items-center justify-between text-[11px] text-[#929B9E]">
           <span className="flex items-center space-x-1.5">
-            <Sliders className="w-3 h-3 text-[#E9A16A]" />
+            <Sliders className="w-3 h-3 text-[#D97943]" />
             <span>Opacity</span>
           </span>
-          <span className="font-mono text-[#E8E5DF]">{Math.round(opacity * 100)}%</span>
+          <span className="font-mono text-[#E7E9E8]">{Math.round(opacity * 100)}%</span>
         </div>
         <input
           type="range"
@@ -60,7 +65,7 @@ export default function LayerControls({ dataset }: LayerControlsProps) {
           value={opacity}
           disabled={!isVisible}
           onChange={(e) => setLayerOpacity(dataset.id, parseFloat(e.target.value))}
-          className="w-full h-1.5 bg-[#090A0C] rounded-lg appearance-none cursor-pointer accent-[#C66B3D] disabled:opacity-40 disabled:cursor-not-allowed"
+          className="w-full h-1 bg-[#292F32] rounded appearance-none cursor-pointer accent-[#D97943] disabled:opacity-40 disabled:cursor-not-allowed"
         />
       </div>
     </div>

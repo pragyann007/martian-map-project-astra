@@ -34,6 +34,8 @@ import {
   Crosshair,
   Compass,
   MapPin,
+  Grid,
+  Layers,
 } from "lucide-react";
 
 export default function MapContainer() {
@@ -43,8 +45,14 @@ export default function MapContainer() {
   const graticuleRef = useRef<Graticule | null>(null);
   const landmarksLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
   const footprintsLayerRef = useRef<VectorLayer<VectorSource> | null>(null);
+
   const pendingRequestsRef = useRef<number>(0);
   const loadingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const selectedLandmarkIdRef = useRef<string | null>(null);
+  const hoveredDatasetIdRef = useRef<string | null>(null);
+  const selectedDatasetIdRef = useRef<string>("jez-ctx");
+  const showFootprintsRef = useRef<boolean>(false);
+
   const filtersRef = useRef<{
     brightness: Record<string, number>;
     contrast: Record<string, number>;
@@ -74,12 +82,27 @@ export default function MapContainer() {
   const selectedLandmarkId = useVisualizerStore((state) => state.selectedLandmarkId);
   const landmarkNonce = useVisualizerStore((state) => state.landmarkNonce);
 
-  const activeOverlayId = useVisualizerStore((state) => state.activeOverlayId);
   const activeBaseMapId = useVisualizerStore((state) => state.activeBaseMapId);
-  const activeDataset =
-    MARS_DATASETS.find((d) => d.id === activeOverlayId) ||
-    MARS_DATASETS.find((d) => d.id === activeBaseMapId) ||
-    JEZ_CTX;
+  const selectedDatasetId = useVisualizerStore((state) => state.selectedDatasetId);
+  const hoveredDatasetId = useVisualizerStore((state) => state.hoveredDatasetId);
+
+  const setShowGraticule = useVisualizerStore((state) => state.setShowGraticule);
+  const setShowLandmarks = useVisualizerStore((state) => state.setShowLandmarks);
+  const setShowFootprints = useVisualizerStore((state) => state.setShowFootprints);
+  const setIsMapReady = useVisualizerStore((state) => state.setIsMapReady);
+  const setBaseMapError = useVisualizerStore((state) => state.setBaseMapError);
+
+  useEffect(() => {
+    selectedLandmarkIdRef.current = selectedLandmarkId;
+    hoveredDatasetIdRef.current = hoveredDatasetId;
+    selectedDatasetIdRef.current = selectedDatasetId;
+    showFootprintsRef.current = showFootprints;
+  }, [selectedLandmarkId, hoveredDatasetId, selectedDatasetId, showFootprints]);
+
+  const activeBaseMap = MARS_DATASETS.find((d) => d.id === activeBaseMapId) || MARS_DATASETS[0];
+  const activeOverlayCount = visibleLayers.filter(
+    (id) => id !== "viking-mdim21" && id !== "mola-clrshade"
+  ).length;
 
   // Throttled loading state helper to avoid rapid re-rendering during tile bursts
   const setTileLoading = useCallback((delta: number) => {
@@ -145,9 +168,15 @@ export default function MapContainer() {
           });
           s.on("tileloadend", () => {
             setTileLoading(-1);
+            if (dataset.id === activeBaseMapId) {
+              setIsMapReady(true);
+            }
           });
           s.on("tileloaderror", () => {
             setTileLoading(-1);
+            if (dataset.id === activeBaseMapId) {
+              setBaseMapError(`Failed to load ${dataset.shortName} tiles from NASA Trek.`);
+            }
           });
         } else {
           s.on("imageloadstart", () => {
@@ -171,21 +200,18 @@ export default function MapContainer() {
     const footprintFeatures = [
       new Feature({
         geometry: fromExtent(JEZ_HIRISE.extent),
-        name: "MRO HiRISE Delta Swath (~25 cm/px)",
-        instrument: "HiRISE",
-        color: "rgba(233, 161, 106, 0.9)",
+        name: "HiRISE Delta Swath (~25 cm/px)",
+        datasetId: "jez-hirise",
       }),
       new Feature({
         geometry: fromExtent(JEZ_CTX.extent),
-        name: "MRO CTX Jezero Mosaic (~6 m/px)",
-        instrument: "CTX",
-        color: "rgba(198, 107, 61, 0.75)",
+        name: "CTX Jezero Mosaic (~6 m/px)",
+        datasetId: "jez-ctx",
       }),
       new Feature({
         geometry: fromExtent(JEZ_REGIONAL_VISIBLE.extent),
-        name: "HRSC / CTX Regional Visible Composite",
-        instrument: "HRSC",
-        color: "rgba(119, 124, 131, 0.6)",
+        name: "Regional Visible Composite (~12 m/px)",
+        datasetId: "jez-regional-visible",
       }),
     ];
 
@@ -194,75 +220,97 @@ export default function MapContainer() {
         features: footprintFeatures,
       }),
       style: (feature) => {
-        const color = (feature.get("color") as string) || "rgba(198, 107, 61, 0.8)";
+        const datasetId = feature.get("datasetId") as string;
         const name = feature.get("name") as string;
+        const isHovered = hoveredDatasetIdRef.current === datasetId;
+        const isSelected = selectedDatasetIdRef.current === datasetId;
+        const globalShow = showFootprintsRef.current;
+
+        // Contextual visibility: only show if global toggle is on OR this swath is hovered/selected
+        if (!globalShow && !isHovered && !isSelected) {
+          return undefined;
+        }
+
+        const color = isSelected || isHovered
+          ? "rgba(217, 121, 67, 0.9)"
+          : "rgba(146, 155, 158, 0.4)";
+
         return new Style({
           stroke: new Stroke({
             color,
-            width: 1.5,
-            lineDash: [6, 4],
+            width: isSelected || isHovered ? 2 : 1,
+            lineDash: isSelected || isHovered ? [6, 4] : [4, 4],
           }),
           fill: new Fill({
-            color: "rgba(198, 107, 61, 0.02)",
+            color: isSelected || isHovered ? "rgba(217, 121, 67, 0.04)" : "transparent",
           }),
-          text: new Text({
-            text: `[SWATH] ${name}`,
-            font: "10px monospace",
-            fill: new Fill({ color: "rgba(233, 161, 106, 0.9)" }),
-            stroke: new Stroke({ color: "rgba(9, 10, 12, 0.95)", width: 3 }),
-            placement: "line",
-            offsetY: -8,
-          }),
+          text: isSelected || isHovered
+            ? new Text({
+                text: name,
+                font: "10px monospace",
+                fill: new Fill({ color: "#D97943" }),
+                stroke: new Stroke({ color: "#0B0D0E", width: 3 }),
+                placement: "line",
+                offsetY: -8,
+              })
+            : undefined,
         });
       },
-      zIndex: 15,
+      zIndex: 20,
       visible: true,
     });
     footprintsLayerRef.current = footprintsLayer;
     initialLayers.push(footprintsLayer);
 
-    // 3. Sourced Geographic Landmarks & Science POIs Layer
+    // 3. Sourced Geographic Landmarks & Science POIs Layer (with OpenLayers declutter)
     const landmarkFeatures = MARS_LANDMARKS.map((lm) => {
-      const f = new Feature({
+      return new Feature({
         geometry: new Point(lm.location),
         name: lm.name,
         category: lm.category,
         landmarkId: lm.id,
       });
-      return f;
     });
 
     const landmarksLayer = new VectorLayer({
       source: new VectorSource({
         features: landmarkFeatures,
       }),
+      declutter: true,
       style: (feature) => {
-        const name = feature.get("name") as string;
+        const view = mapInstanceRef.current?.getView();
+        const zoom = view?.getZoom() ?? 9.5;
         const category = feature.get("category") as string;
+        const landmarkId = feature.get("landmarkId") as string;
+        const isSelected = selectedLandmarkIdRef.current === landmarkId;
         const isLanding = category === "Landing Site";
+
+        // Progressive decluttering: at low zoom (< 8.5), only show landing site and major craters/planitia
+        if (zoom < 8.5 && !isLanding && category !== "Crater" && !isSelected) {
+          return undefined;
+        }
+
+        const baseColor = isSelected
+          ? "#D97943"
+          : isLanding
+          ? "#D97943"
+          : "#E7E9E8";
 
         return new Style({
           image: new CircleStyle({
-            radius: isLanding ? 6 : 4.5,
-            fill: new Fill({
-              color: isLanding ? "rgba(233, 161, 106, 0.95)" : "rgba(232, 229, 223, 0.9)",
-            }),
+            radius: isSelected ? 6.5 : isLanding ? 5 : 3.5,
+            fill: new Fill({ color: baseColor }),
             stroke: new Stroke({
-              color: "rgba(9, 10, 12, 0.9)",
-              width: 2,
+              color: "#0B0D0E",
+              width: isSelected ? 2.5 : 1.5,
             }),
           }),
           text: new Text({
-            text: name,
-            font: "bold 10px sans-serif",
-            fill: new Fill({
-              color: isLanding ? "#E9A16A" : "#E8E5DF",
-            }),
-            stroke: new Stroke({
-              color: "rgba(9, 10, 12, 0.95)",
-              width: 3.5,
-            }),
-            offsetY: -12,
+            text: feature.get("name") as string,
+            font: isSelected ? "bold 11px sans-serif" : "10px sans-serif",
+            fill: new Fill({ color: isSelected ? "#D97943" : "#E7E9E8" }),
+            stroke: new Stroke({ color: "#0B0D0E", width: 3 }),
+            offsetY: -11,
           }),
         });
       },
@@ -275,9 +323,9 @@ export default function MapContainer() {
     // 4. Mars Graticule Overlay (Latitude & Longitude Grid Lines)
     const graticule = new Graticule({
       strokeStyle: new Stroke({
-        color: "rgba(198, 107, 61, 0.22)",
-        width: 0.8,
-        lineDash: [4, 4],
+        color: "rgba(146, 155, 158, 0.18)",
+        width: 0.75,
+        lineDash: [3, 4],
       }),
       showLabels: true,
       wrapX: false,
@@ -286,16 +334,16 @@ export default function MapContainer() {
         textBaseline: "middle",
         textAlign: "right",
         offsetX: -6,
-        fill: new Fill({ color: "rgba(233, 161, 106, 0.75)" }),
-        stroke: new Stroke({ color: "rgba(9, 10, 12, 0.9)", width: 3 }),
+        fill: new Fill({ color: "rgba(146, 155, 158, 0.75)" }),
+        stroke: new Stroke({ color: "rgba(11, 13, 14, 0.9)", width: 2.5 }),
       }),
       lonLabelStyle: new Text({
         font: "10px monospace",
         textBaseline: "bottom",
         textAlign: "center",
         offsetY: -6,
-        fill: new Fill({ color: "rgba(233, 161, 106, 0.75)" }),
-        stroke: new Stroke({ color: "rgba(9, 10, 12, 0.9)", width: 3 }),
+        fill: new Fill({ color: "rgba(146, 155, 158, 0.75)" }),
+        stroke: new Stroke({ color: "rgba(11, 13, 14, 0.9)", width: 2.5 }),
       }),
       intervals: [90, 45, 30, 20, 10, 5, 2, 1, 0.5, 0.2, 0.1, 0.05],
       zIndex: 25,
@@ -320,7 +368,7 @@ export default function MapContainer() {
       bar: true,
       steps: 4,
       text: true,
-      minWidth: 120,
+      minWidth: 110,
     });
 
     const map = new Map({
@@ -366,6 +414,7 @@ export default function MapContainer() {
       if (z !== undefined) {
         setCurrentZoom(z.toFixed(1));
       }
+      landmarksLayer.changed();
     });
 
     mapInstanceRef.current = map;
@@ -393,6 +442,7 @@ export default function MapContainer() {
           padding: [40, 40, 40, 40],
         });
       }
+      setIsMapReady(true);
     }, 120);
 
     return () => {
@@ -410,7 +460,7 @@ export default function MapContainer() {
       landmarksLayerRef.current = null;
       footprintsLayerRef.current = null;
     };
-  }, [setTileLoading]);
+  }, [setTileLoading, activeBaseMapId, setIsMapReady, setBaseMapError]);
 
   // Synchronize layer visibility from Zustand without reconstructing map
   useEffect(() => {
@@ -448,14 +498,15 @@ export default function MapContainer() {
   useEffect(() => {
     if (landmarksLayerRef.current) {
       landmarksLayerRef.current.setVisible(showLandmarks);
+      landmarksLayerRef.current.changed();
     }
-  }, [showLandmarks]);
+  }, [showLandmarks, selectedLandmarkId]);
 
   useEffect(() => {
     if (footprintsLayerRef.current) {
-      footprintsLayerRef.current.setVisible(showFootprints);
+      footprintsLayerRef.current.changed();
     }
-  }, [showFootprints]);
+  }, [showFootprints, hoveredDatasetId, selectedDatasetId]);
 
   // Apply Hardware-Accelerated Canvas Filters (Brightness, Contrast, BlendMode)
   useEffect(() => {
@@ -478,9 +529,10 @@ export default function MapContainer() {
       view.animate({
         center: landmark.location,
         zoom: landmark.category === "Landing Site" ? 14 : landmark.category === "Planitia" ? 6 : 12,
-        duration: 900,
+        duration: 800,
       });
     }
+    landmarksLayerRef.current?.changed();
   }, [selectedLandmarkId, landmarkNonce]);
 
   // Navigation Helpers
@@ -488,7 +540,7 @@ export default function MapContainer() {
     const view = mapInstanceRef.current?.getView();
     if (view) {
       const zoom = view.getZoom() ?? 9;
-      view.animate({ zoom: zoom + 1, duration: 250 });
+      view.animate({ zoom: zoom + 1, duration: 200 });
     }
   };
 
@@ -496,7 +548,7 @@ export default function MapContainer() {
     const view = mapInstanceRef.current?.getView();
     if (view) {
       const zoom = view.getZoom() ?? 9;
-      view.animate({ zoom: zoom - 1, duration: 250 });
+      view.animate({ zoom: zoom - 1, duration: 200 });
     }
   };
 
@@ -510,7 +562,7 @@ export default function MapContainer() {
         view.fit(JEZ_CTX.extent, {
           size,
           padding: [40, 40, 40, 40],
-          duration: 400,
+          duration: 350,
         });
       }
     }
@@ -522,13 +574,13 @@ export default function MapContainer() {
       view.animate({
         center: [77.5, 18.4],
         zoom: 2.5,
-        duration: 500,
+        duration: 450,
       });
     }
   };
 
   return (
-    <div className="relative w-full h-full flex-1 flex flex-col bg-[#090A0C] overflow-hidden select-none min-h-0">
+    <div className="relative w-full h-full flex-1 flex flex-col bg-[#0B0D0E] overflow-hidden select-none min-h-0">
       {/* Map Canvas Element */}
       <div
         ref={mapElementRef}
@@ -536,37 +588,29 @@ export default function MapContainer() {
         style={{ width: "100%", height: "100%", minHeight: "450px" }}
       />
 
-      {/* Loading Overlay */}
-      {isLoading && (
-        <div className="absolute top-4 left-4 z-20 flex items-center space-x-2 px-3 py-1.5 rounded bg-[#090A0C]/90 border border-[#777C83]/30 backdrop-blur-md text-xs text-[#E9A16A] shadow-xl">
-          <Loader2 className="w-3.5 h-3.5 animate-spin" />
-          <span>Streaming NASA Mars Trek tiles...</span>
-        </div>
-      )}
-
       {/* Hovered Landmark HUD Pill */}
       {hoveredLandmark && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-1.5 px-3 py-1.5 rounded-full bg-[#090A0C]/90 border border-[#E9A16A]/50 backdrop-blur-md text-xs text-[#E8E5DF] shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-          <MapPin className="w-3.5 h-3.5 text-[#E9A16A]" />
-          <span className="font-semibold">{hoveredLandmark}</span>
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20 flex items-center space-x-1.5 px-3 py-1.5 rounded bg-[#101315]/90 border border-[#292F32] backdrop-blur-md text-xs text-[#E7E9E8] shadow-lg animate-in fade-in zoom-in-95 duration-100">
+          <MapPin className="w-3.5 h-3.5 text-[#D97943]" />
+          <span className="font-medium">{hoveredLandmark}</span>
         </div>
       )}
 
-      {/* Error Banner */}
+      {/* Base Map Load Error Banner */}
       {loadError && (
-        <div className="absolute top-4 left-4 z-20 flex items-center space-x-2 px-3 py-2 rounded bg-red-950/80 border border-red-800 text-xs text-red-200">
-          <AlertCircle className="w-4 h-4 text-red-400" />
+        <div className="absolute top-4 left-4 z-20 flex items-center space-x-2 px-3 py-2 rounded bg-red-950/80 border border-red-800 text-xs text-red-200 shadow-xl">
+          <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
           <span>{loadError}</span>
         </div>
       )}
 
-      {/* Viewport Floating Controls Toolbar */}
-      <div className="absolute top-4 right-4 z-20 flex flex-col space-y-1.5 bg-[#090A0C]/90 border border-[#17191D] p-1.5 rounded-lg backdrop-blur-md shadow-2xl">
+      {/* Viewport Floating Controls Toolbar (Compact & Accessible) */}
+      <div className="absolute top-4 right-4 z-20 flex flex-col space-y-1 bg-[#101315]/90 border border-[#292F32] p-1 rounded-md backdrop-blur-md shadow-xl">
         <button
           onClick={handleZoomIn}
           title="Zoom In"
           aria-label="Zoom In"
-          className="p-2 text-[#E8E5DF] hover:text-white hover:bg-[#17191D] rounded transition-colors"
+          className="p-1.5 text-[#929B9E] hover:text-[#E7E9E8] hover:bg-[#171B1D] rounded transition-colors"
         >
           <ZoomIn className="w-4 h-4" />
         </button>
@@ -574,58 +618,115 @@ export default function MapContainer() {
           onClick={handleZoomOut}
           title="Zoom Out"
           aria-label="Zoom Out"
-          className="p-2 text-[#E8E5DF] hover:text-white hover:bg-[#17191D] rounded transition-colors"
+          className="p-1.5 text-[#929B9E] hover:text-[#E7E9E8] hover:bg-[#171B1D] rounded transition-colors"
         >
           <ZoomOut className="w-4 h-4" />
         </button>
 
-        <div className="w-full h-px bg-[#17191D]" />
+        <div className="w-full h-px bg-[#292F32]" />
 
         <button
           onClick={handleResetJezero}
-          title="Fit Jezero Crater AOI"
-          aria-label="Fit Jezero Crater AOI"
-          className="p-2 text-[#E9A16A] hover:text-white hover:bg-[#17191D] rounded transition-colors"
+          title="Focus Jezero Crater"
+          aria-label="Focus Jezero Crater"
+          className="p-1.5 text-[#D97943] hover:text-[#E7E9E8] hover:bg-[#171B1D] rounded transition-colors"
         >
           <Maximize2 className="w-4 h-4" />
         </button>
 
         <button
           onClick={handleGlobalMars}
-          title="Mars Global Hemisphere View"
-          aria-label="Mars Global View"
-          className="p-2 text-[#777C83] hover:text-[#E9A16A] hover:bg-[#17191D] rounded transition-colors"
+          title="Global Mars Hemisphere View"
+          aria-label="Global Mars View"
+          className="p-1.5 text-[#929B9E] hover:text-[#E7E9E8] hover:bg-[#171B1D] rounded transition-colors"
         >
           <Compass className="w-4 h-4" />
         </button>
+
+        <div className="w-full h-px bg-[#292F32]" />
+
+        <button
+          onClick={() => setShowGraticule((prev) => !prev)}
+          title={showGraticule ? "Hide Coordinate Grid" : "Show Coordinate Grid"}
+          aria-label={showGraticule ? "Hide Coordinate Grid" : "Show Coordinate Grid"}
+          className={`p-1.5 rounded transition-colors ${
+            showGraticule
+              ? "text-[#D97943] bg-[#171B1D]"
+              : "text-[#929B9E] hover:text-[#E7E9E8] hover:bg-[#171B1D]"
+          }`}
+        >
+          <Grid className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => setShowLandmarks((prev) => !prev)}
+          title={showLandmarks ? "Hide Surface Landmarks" : "Show Surface Landmarks"}
+          aria-label={showLandmarks ? "Hide Surface Landmarks" : "Show Surface Landmarks"}
+          className={`p-1.5 rounded transition-colors ${
+            showLandmarks
+              ? "text-[#D97943] bg-[#171B1D]"
+              : "text-[#929B9E] hover:text-[#E7E9E8] hover:bg-[#171B1D]"
+          }`}
+        >
+          <MapPin className="w-4 h-4" />
+        </button>
+
+        <button
+          onClick={() => setShowFootprints((prev) => !prev)}
+          title={showFootprints ? "Hide Instrument Footprints" : "Show Instrument Footprints"}
+          aria-label={showFootprints ? "Hide Instrument Footprints" : "Show Instrument Footprints"}
+          className={`p-1.5 rounded transition-colors ${
+            showFootprints
+              ? "text-[#D97943] bg-[#171B1D]"
+              : "text-[#929B9E] hover:text-[#E7E9E8] hover:bg-[#171B1D]"
+          }`}
+        >
+          <Layers className="w-4 h-4" />
+        </button>
       </div>
 
-      {/* Bottom Status Ribbon HUD */}
-      <div className="absolute bottom-3 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none text-[11px] font-mono uppercase tracking-wider text-[#777C83]">
-        {/* Coordinates readout */}
-        <div className="bg-[#090A0C]/90 border border-[#17191D] px-3.5 py-1.5 rounded-md backdrop-blur-md pointer-events-auto flex items-center space-x-3 shadow-lg">
-          <Crosshair className="w-3.5 h-3.5 text-[#E9A16A]" />
+      {/* Bottom Status Ribbon HUD (Compact, restrained scientific status) */}
+      <div className="absolute bottom-3 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none text-[11px] font-mono text-[#929B9E]">
+        {/* Coordinates & Zoom readout */}
+        <div className="bg-[#101315]/90 border border-[#292F32] px-3 py-1.5 rounded backdrop-blur-md pointer-events-auto flex items-center space-x-3 shadow-lg">
+          <Crosshair className="w-3.5 h-3.5 text-[#D97943]" />
           {mouseCoord ? (
             <span>
-              LON: <strong className="text-[#E8E5DF]">{mouseCoord.lon}° E</strong> | LAT:{" "}
-              <strong className="text-[#E8E5DF]">{mouseCoord.lat}° N</strong>
+              LON: <strong className="text-[#E7E9E8]">{mouseCoord.lon}° E</strong> | LAT:{" "}
+              <strong className="text-[#E7E9E8]">{mouseCoord.lat}° N</strong>
             </span>
           ) : (
-            <span>HOVER OVER MAP FOR MARS COORDINATES</span>
+            <span className="text-[#929B9E]">HOVER OVER MAP FOR COORDINATES</span>
           )}
-          <span className="text-[#17191D]">|</span>
+          <span className="text-[#292F32]">|</span>
           <span>
-            ZOOM: <strong className="text-[#E9A16A]">{currentZoom}</strong>
+            ZOOM: <strong className="text-[#E7E9E8]">{currentZoom}</strong>
           </span>
+          <span className="text-[#292F32] hidden sm:inline">|</span>
+          <span className="text-[10px] text-[#929B9E] hidden sm:inline">MARS EQ (IAU 2000)</span>
         </div>
 
-        {/* Active Instrument & Layer Badge */}
-        <div className="bg-[#090A0C]/90 border border-[#17191D] px-3 py-1.5 rounded-md backdrop-blur-md pointer-events-auto flex items-center space-x-2 shadow-lg">
-          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-          <span className="text-[#E8E5DF] font-semibold">{activeDataset.shortName}</span>
-          <span className="text-[#777C83]">[{activeDataset.resolutionMeters} M/PX]</span>
-          <span className="text-[#17191D]">|</span>
-          <span className="text-[#E9A16A]">{activeBaseMapId.toUpperCase()} BASE</span>
+        {/* Active Base Map & Stream Status Indicator */}
+        <div className="bg-[#101315]/90 border border-[#292F32] px-3 py-1.5 rounded backdrop-blur-md pointer-events-auto flex items-center space-x-2.5 shadow-lg">
+          {isLoading ? (
+            <div className="flex items-center space-x-1.5 text-[10px] text-[#D97943]">
+              <Loader2 className="w-3 h-3 animate-spin" />
+              <span>STREAMING TILES...</span>
+            </div>
+          ) : (
+            <div className="flex items-center space-x-1.5 text-[10px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span className="text-[#929B9E]">LIVE • TREK</span>
+            </div>
+          )}
+          <span className="text-[#292F32]">|</span>
+          <span className="text-[#E7E9E8] font-medium">{activeBaseMap.shortName}</span>
+          {activeOverlayCount > 0 && (
+            <>
+              <span className="text-[#292F32]">|</span>
+              <span className="text-[#D97943]">+{activeOverlayCount} OVERLAY{activeOverlayCount > 1 ? "S" : ""}</span>
+            </>
+          )}
         </div>
       </div>
     </div>

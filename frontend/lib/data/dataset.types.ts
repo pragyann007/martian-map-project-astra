@@ -1,5 +1,6 @@
 export type DatasetSourceType = "wmts" | "local-raster";
 export type DatasetCategory = "imagery" | "thermal" | "topography" | "regional";
+export type DatasetRole = "base" | "overlay";
 export type BlendMode = "normal" | "multiply" | "screen" | "luminosity" | "overlay";
 
 export interface MarsLandmark {
@@ -20,6 +21,7 @@ export interface BaseMarsDataset {
   mission: string;
   description: string;
   category: DatasetCategory;
+  role: DatasetRole;
 
   /** [west, south, east, north], in Mars geographic degrees. */
   extent: [number, number, number, number];
@@ -32,6 +34,7 @@ export interface BaseMarsDataset {
   defaultBlendMode?: BlendMode;
 
   isBaseMap?: boolean;
+  zIndex?: number;
   spectralType: "color" | "panchromatic" | "thermal" | "altimetry";
   wavelengthRange?: string;
 
