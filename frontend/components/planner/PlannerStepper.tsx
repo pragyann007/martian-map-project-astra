@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   Compass,
   MapPin,
@@ -17,6 +18,7 @@ import {
   ChevronDown,
   ChevronUp,
   CheckCircle2,
+  Eye,
 } from "lucide-react";
 
 import { usePlannerStore, type PlannerStep } from "@/lib/state/planner-store";
@@ -369,6 +371,15 @@ export default function PlannerStepper() {
                 💡 Draggable on map
               </span>
             </div>
+
+            {/* Explore in 3D Action */}
+            <Link
+              href={`/planner/terrain-explorer?lon=${startPoint.lon.toFixed(4)}&lat=${startPoint.lat.toFixed(4)}&source=stepper-start`}
+              className="w-full py-2 px-3 rounded-lg bg-[#17191D] border border-[#38BDF8]/40 hover:bg-[#38BDF8]/10 text-xs font-semibold text-[#38BDF8] flex items-center justify-center space-x-2 transition-all"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Explore Start Site in 3D (First-Person) ↗</span>
+            </Link>
           </div>
         )}
 
@@ -536,6 +547,15 @@ export default function PlannerStepper() {
                 💡 Draggable on map
               </span>
             </div>
+
+            {/* Explore Target in 3D Action */}
+            <Link
+              href={`/planner/terrain-explorer?lon=${destinationPoint.lon.toFixed(4)}&lat=${destinationPoint.lat.toFixed(4)}&source=stepper-dest`}
+              className="w-full py-2 px-3 rounded-lg bg-[#17191D] border border-[#E9A16A]/40 hover:bg-[#E9A16A]/10 text-xs font-semibold text-[#E9A16A] flex items-center justify-center space-x-2 transition-all"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>Explore Destination Terrain in 3D ↗</span>
+            </Link>
           </div>
         )}
 
@@ -917,6 +937,25 @@ export default function PlannerStepper() {
                   </div>
                 );
               })()}
+            </div>
+
+            {/* 3D Terrain Exploration Entry Point */}
+            <div className="p-3.5 rounded-xl bg-[#17191D]/60 border border-[#E9A16A]/30 flex items-center justify-between shadow-sm">
+              <div>
+                <span className="text-xs font-semibold text-[#E8E5DF] flex items-center gap-1.5">
+                  <Eye className="w-3.5 h-3.5 text-[#E9A16A]" />
+                  Jezero 3D Surface Inspection
+                </span>
+                <span className="text-[10px] text-[#777C83] block mt-0.5">
+                  Inspect crater relief & delta scarp in first-person mode
+                </span>
+              </div>
+              <Link
+                href={`/planner/terrain-explorer?lon=${startPoint.lon.toFixed(4)}&lat=${startPoint.lat.toFixed(4)}&source=step5-routes`}
+                className="px-3 py-1.5 rounded bg-[#E9A16A]/20 hover:bg-[#E9A16A]/30 border border-[#E9A16A]/50 text-[#E9A16A] hover:text-white font-semibold text-xs transition-colors inline-flex items-center gap-1.5"
+              >
+                <span>Explore in 3D ↗</span>
+              </Link>
             </div>
 
             {/* AI Advisory Layer */}

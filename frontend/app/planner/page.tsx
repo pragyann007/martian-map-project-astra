@@ -19,6 +19,7 @@ export default function PlannerPage() {
   const terrain = usePlannerStore((s) => s.terrain);
   const initTerrain = usePlannerStore((s) => s.initTerrain);
   const isCalculating = usePlannerStore((s) => s.isCalculating);
+  const startPoint = usePlannerStore((s) => s.startPoint);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -55,6 +56,13 @@ export default function PlannerPage() {
             className="hidden md:inline-flex items-center space-x-1.5 text-[#777C83] hover:text-[#E8E5DF] transition-colors uppercase tracking-wider"
           >
             <span>← Dataset Visualizer</span>
+          </Link>
+          <Link
+            href={`/planner/terrain-explorer?lon=${startPoint.lon.toFixed(4)}&lat=${startPoint.lat.toFixed(4)}&source=planner-header`}
+            className="inline-flex items-center space-x-1.5 px-2.5 py-1 rounded bg-[#17191D] border border-[#E9A16A]/40 text-[#E9A16A] hover:bg-[#E9A16A]/10 hover:border-[#E9A16A] transition-colors uppercase tracking-wider font-semibold text-[11px]"
+            title="Explore Jezero Crater in 3D first-person mode"
+          >
+            <span>3D Explorer ↗</span>
           </Link>
           <span className="px-2.5 py-1 rounded bg-[#17191D] border border-[#777C83]/30 text-[#E9A16A] font-mono text-[11px] hidden sm:inline-block">
             {terrain.status === "ready"
