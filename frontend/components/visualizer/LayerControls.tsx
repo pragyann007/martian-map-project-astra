@@ -1,11 +1,11 @@
 "use client";
 
 import { useVisualizerStore } from "@/lib/state/visualizer-store";
-import type { MarsRasterDataset } from "@/lib/data/dataset.types";
+import type { MarsDataset } from "@/lib/data/dataset.types";
 import { Eye, EyeOff, Sliders } from "lucide-react";
 
 interface LayerControlsProps {
-  dataset: MarsRasterDataset;
+  dataset: MarsDataset;
 }
 
 export default function LayerControls({ dataset }: LayerControlsProps) {
@@ -14,8 +14,12 @@ export default function LayerControls({ dataset }: LayerControlsProps) {
   const toggleLayer = useVisualizerStore((state) => state.toggleLayer);
   const setLayerOpacity = useVisualizerStore((state) => state.setLayerOpacity);
 
-  const isVisible = visibleLayers.includes(dataset.id);
-  const opacity = layerOpacity[dataset.id] !== undefined ? layerOpacity[dataset.id] : 1;
+  if (!dataset) return null;
+
+  const isVisible = (visibleLayers || []).includes(dataset.id);
+  const opacity = (layerOpacity && layerOpacity[dataset.id] !== undefined)
+    ? layerOpacity[dataset.id]
+    : (dataset.defaultOpacity ?? 1);
 
   return (
     <div className="space-y-3 pt-2">
