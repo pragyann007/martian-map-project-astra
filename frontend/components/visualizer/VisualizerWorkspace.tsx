@@ -14,6 +14,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   CheckCircle2,
+  Eye,
 } from "lucide-react";
 import DatasetPanel from "./DatasetPanel";
 import DatasetInspector from "./DatasetInspector";
@@ -108,6 +109,15 @@ export default function VisualizerWorkspace() {
               <span>Layers</span>
             </button>
           </div>
+
+          <Link
+            href="/planner/terrain-explorer?lon=77.50&lat=18.50&source=visualizer"
+            className="hidden sm:inline-flex items-center space-x-1.5 text-xs text-[#E7E9E8] hover:text-[#D97943] transition-colors font-mono font-medium px-2.5 py-1 rounded bg-[#171B1D] border border-[#292F32] hover:border-[#D97943]/40"
+            title="Explore Jezero Crater in 3D (First-Person)"
+          >
+            <Eye className="w-3 h-3 text-[#D97943]" />
+            <span>3D Explorer ↗</span>
+          </Link>
 
           <Link
             href="/planner"

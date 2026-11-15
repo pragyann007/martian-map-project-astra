@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { MARS_LANDMARKS } from "@/lib/data/mars-datasets";
 import { useVisualizerStore } from "@/lib/state/visualizer-store";
 import type { MarsLandmark } from "@/lib/data/dataset.types";
@@ -10,6 +11,7 @@ import {
   Mountain,
   Search,
   Crosshair,
+  ExternalLink,
 } from "lucide-react";
 
 export default function LandmarksPanel() {
@@ -189,12 +191,24 @@ export default function LandmarksPanel() {
               </div>
 
               {isSelected && (
-                <div className="mt-2 pt-2 border-t border-[#292F32] space-y-1 pl-5">
+                <div className="mt-2 pt-2 border-t border-[#292F32] space-y-2 pl-5">
                   <p className="text-[11px] text-[#929B9E] leading-relaxed">
                     {landmark.description}
                   </p>
-                  <div className="text-[10px] text-[#60686B] font-mono">
-                    Source: {landmark.source}
+                  <div className="flex items-center justify-between text-[10px] pt-1">
+                    <span className="text-[#60686B] font-mono">
+                      Source: {landmark.source}
+                    </span>
+                    <Link
+                      href={`/planner/terrain-explorer?lon=${lon}&lat=${lat}&source=landmark-${encodeURIComponent(
+                        landmark.name
+                      )}`}
+                      className="inline-flex items-center space-x-1 text-[#D97943] hover:text-[#E96A3D] font-mono hover:underline"
+                      title={`Inspect ${landmark.name} in 3D terrain explorer`}
+                    >
+                      <span>Explore in 3D</span>
+                      <ExternalLink className="w-2.5 h-2.5" />
+                    </Link>
                   </div>
                 </div>
               )}
