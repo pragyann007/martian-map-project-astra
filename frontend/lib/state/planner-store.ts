@@ -20,9 +20,18 @@ import { generateSimulatedTerrain } from '../domain/sim-terrain';
 import { computeAllRoutes } from '../domain/pathfinder';
 
 export type PlannerStep = 1 | 2 | 3 | 4 | 5;
+export type ViewMode = '2d' | '3d';
+export type SimCameraMode = 'chase' | 'orbit' | 'topdown';
+export type SimStatus = 'stopped' | 'playing' | 'paused' | 'failed' | 'completed';
 
 interface PlannerState {
   currentStep: PlannerStep;
+  viewMode: ViewMode;
+  simStatus: SimStatus;
+  simProgress: number; // 0 to 1
+  simSpeed: number; // 1, 2, 4
+  simCameraMode: SimCameraMode;
+  simFailureReason: string | null;
   mode: PlannerMode;
   astronaut: AstronautProfile;
   terrain: {
@@ -60,6 +69,11 @@ interface PlannerState {
   toggleEmergencyLeak: () => void;
   setActiveStrategy: (strategy: Strategy) => void;
   setRoverProgress: (progress: number) => void;
+  setViewMode: (viewMode: ViewMode) => void;
+  setSimStatus: (status: SimStatus, reason?: string | null) => void;
+  setSimProgress: (progress: number) => void;
+  setSimSpeed: (speed: number) => void;
+  setSimCameraMode: (cam: SimCameraMode) => void;
   initTerrain: () => Promise<void>;
   recalculateRoutes: () => void;
   requestAiBriefing: () => Promise<void>;
@@ -72,6 +86,12 @@ const DEFAULT_DEST: LonLat = { lon: 77.3820, lat: 18.4280 };
 
 export const usePlannerStore = create<PlannerState>((set, get) => ({
   currentStep: 1,
+  viewMode: '2d',
+  simStatus: 'stopped',
+  simProgress: 0,
+  simSpeed: 1,
+  simCameraMode: 'chase',
+  simFailureReason: null,
   mode: 'survival',
   astronaut: { ...DEFAULT_ASTRONAUT },
   terrain: {
@@ -167,8 +187,14 @@ export const usePlannerStore = create<PlannerState>((set, get) => ({
     get().recalculateRoutes();
   },
 
-  setActiveStrategy: (activeStrategy) => set({ activeStrategy, roverProgress: 0 }),
+  setActiveStrategy: (activeStrategy) =>
+    set({ activeStrategy, roverProgress: 0, simProgress: 0, simStatus: 'stopped', simFailureReason: null }),
   setRoverProgress: (roverProgress) => set({ roverProgress }),
+  setViewMode: (viewMode) => set({ viewMode }),
+  setSimStatus: (simStatus, simFailureReason = null) => set({ simStatus, simFailureReason }),
+  setSimProgress: (simProgress) => set({ simProgress }),
+  setSimSpeed: (simSpeed) => set({ simSpeed }),
+  setSimCameraMode: (simCameraMode) => set({ simCameraMode }),
 
   initTerrain: async () => {
     set({ terrain: { grid: null, status: 'loading', note: 'Loading USGS Mars 2020 Jezero DTM...' } });
