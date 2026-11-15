@@ -49,6 +49,9 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
     gsap.ticker.add(updateTicker);
     gsap.ticker.lagSmoothing(0);
 
+    // Initial ScrollTrigger refresh after Lenis attaches
+    ScrollTrigger.refresh();
+
     // Global smooth anchor link navigation handler
     const handleAnchorClick = (e: MouseEvent) => {
       const anchor = (e.target as HTMLElement).closest("a");
@@ -61,15 +64,24 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
           lenis.scrollTo(targetElement as HTMLElement, {
             offset: -30,
             duration: 1.3,
+            onComplete: () => {
+              ScrollTrigger.refresh();
+            },
           });
         }
       }
     };
 
+    const handleResize = () => {
+      ScrollTrigger.refresh();
+    };
+
     document.addEventListener("click", handleAnchorClick);
+    window.addEventListener("resize", handleResize);
 
     return () => {
       document.removeEventListener("click", handleAnchorClick);
+      window.removeEventListener("resize", handleResize);
       gsap.ticker.remove(updateTicker);
       lenis.destroy();
       lenisRef.current = null;

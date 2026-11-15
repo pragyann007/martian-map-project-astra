@@ -45,19 +45,25 @@
   }
 }
 
-/* Custom scrollbar */
+/* Modern Cross-Browser Scrollbar Styles */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #292F32 transparent;
+}
+
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #090A0C;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #23272E;
-  border-radius: 2px;
+  background: #292F32;
+  border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #E96A3D;
+  background: #D97943;
 }
 
 /* Lenis Smooth Scrolling Styles */
@@ -83,17 +89,29 @@ html.lenis, html.lenis body {
 
 /* Mars Custom Cursor Active State (Only for fine pointer desktop) */
 @media (hover: hover) and (pointer: fine) {
+  /* Universally hide the OS cursor across all UI elements when custom cursor is active */
   html.custom-cursor-active,
   html.custom-cursor-active body,
-  html.custom-cursor-active a,
-  html.custom-cursor-active button,
-  html.custom-cursor-active input,
-  html.custom-cursor-active select,
-  html.custom-cursor-active textarea,
-  html.custom-cursor-active label,
-  html.custom-cursor-active [role="button"],
-  html.custom-cursor-active .cursor-pointer {
+  html.custom-cursor-active * {
     cursor: none !important;
+  }
+
+  /* Allow native map canvas & tools to retain responsive cursor states (grab, grabbing, crosshair, pointer) */
+  html.custom-cursor-active .ol-viewport,
+  html.custom-cursor-active .ol-viewport *,
+  html.custom-cursor-active [data-native-cursor],
+  html.custom-cursor-active [data-native-cursor] * {
+    cursor: auto;
+  }
+
+  html.custom-cursor-active [data-native-cursor].cursor-grab,
+  html.custom-cursor-active .ol-viewport.cursor-grab {
+    cursor: grab;
+  }
+
+  html.custom-cursor-active [data-native-cursor].cursor-grab:active,
+  html.custom-cursor-active .ol-viewport.cursor-grab:active {
+    cursor: grabbing;
   }
 }
 

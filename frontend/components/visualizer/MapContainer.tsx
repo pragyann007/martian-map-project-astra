@@ -584,6 +584,7 @@ export default function MapContainer() {
       {/* Map Canvas Element */}
       <div
         ref={mapElementRef}
+        data-native-cursor="true"
         className="w-full h-full flex-1 cursor-grab active:cursor-grabbing outline-none"
         style={{ width: "100%", height: "100%", minHeight: "450px" }}
       />

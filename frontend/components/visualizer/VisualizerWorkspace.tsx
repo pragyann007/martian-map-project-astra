@@ -123,17 +123,18 @@ export default function VisualizerWorkspace() {
       <div className="flex-1 w-full flex flex-col lg:flex-row overflow-hidden relative min-h-0">
         {/* Left Sidebar: Dataset Selection & Inspector (Target 350px) */}
         <aside
-          className={`w-full lg:w-[350px] border-b lg:border-b-0 lg:border-r border-[#292F32] bg-[#101315] p-3.5 sm:p-4 flex flex-col justify-between space-y-4 overflow-y-auto z-20 shrink-0 h-full transition-all duration-200 ease-in-out ${
+          className={`w-full lg:w-[350px] border-b lg:border-b-0 lg:border-r border-[#292F32] bg-[#101315] flex flex-col z-20 shrink-0 h-full overflow-hidden transition-all duration-200 ease-in-out ${
             mobileTab === "sidebar"
-              ? "block"
+              ? "flex"
               : isSidebarOpen
               ? "hidden lg:flex"
               : "hidden"
           }`}
         >
-          <div className="space-y-4">
+          {/* Fixed Header & Study Area Summary + Tab Switcher */}
+          <div className="p-3.5 sm:p-4 pb-3 shrink-0 border-b border-[#292F32] space-y-3 bg-[#101315]">
             {/* Header / Study Area Summary */}
-            <div className="border-b border-[#292F32] pb-3">
+            <div>
               <div className="flex items-center justify-between text-[10px] text-[#929B9E] font-mono mb-1">
                 <span>Planetary GIS Workstation</span>
                 <span className="text-[#D97943]">Jezero Basin</span>
@@ -187,17 +188,20 @@ export default function VisualizerWorkspace() {
                 <span>Details</span>
               </button>
             </div>
-
-            {/* Tab Contents */}
-            <div className="min-h-0">
-              {activeSidebarTab === "layers" && <DatasetPanel />}
-              {activeSidebarTab === "landmarks" && <LandmarksPanel />}
-              {activeSidebarTab === "details" && <DatasetInspector />}
-            </div>
           </div>
 
-          {/* Provenance Footer */}
-          <div className="pt-3 border-t border-[#292F32] text-[10px] text-[#929B9E] leading-relaxed shrink-0 space-y-1">
+          {/* Scrollable Center: Tab Contents */}
+          <div
+            data-lenis-prevent
+            className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-3.5 sm:p-4 space-y-4"
+          >
+            {activeSidebarTab === "layers" && <DatasetPanel />}
+            {activeSidebarTab === "landmarks" && <LandmarksPanel />}
+            {activeSidebarTab === "details" && <DatasetInspector />}
+          </div>
+
+          {/* Fixed Provenance Footer */}
+          <div className="p-3.5 sm:p-4 pt-3 border-t border-[#292F32] text-[10px] text-[#929B9E] leading-relaxed shrink-0 space-y-1 bg-[#101315]">
             <div className="flex items-center space-x-1 text-[#E7E9E8] font-medium">
               <CheckCircle2 className="w-3 h-3 text-emerald-400" />
               <span>NASA Mars Trek Provenance</span>

@@ -6,11 +6,19 @@ import gsap from "gsap";
 
 export function CustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
+  const scaleWrapRef = useRef<HTMLDivElement>(null);
+
   const [isInteractive, setIsInteractive] = useState(false);
   const [isVisible, setIsVisible] = useState(false);
+  const [isOverMap, setIsOverMap] = useState(false);
+
+  // Stable refs to avoid recreating event listeners or re-triggering state when values haven't changed
+  const isVisibleRef = useRef(false);
+  const isInteractiveRef = useRef(false);
+  const isOverMapRef = useRef(false);
 
   useEffect(() => {
-    // Only activate for fine pointer (mouse) and respect reduced-motion
+    // Only activate for fine pointer (mouse/trackpad desktop) and respect accessibility reduced-motion
     const isFinePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -21,38 +29,74 @@ export function CustomCursor() {
     document.documentElement.classList.add("custom-cursor-active");
 
     const cursor = cursorRef.current;
+    const scaleWrap = scaleWrapRef.current;
     if (!cursor) return;
 
-    // Use GSAP quickTo for ultra-smooth 60/120fps tracking with subtle easing
-    const xTo = gsap.quickTo(cursor, "x", { duration: 0.14, ease: "power2.out" });
-    const yTo = gsap.quickTo(cursor, "y", { duration: 0.14, ease: "power2.out" });
-
     const handlePointerMove = (e: PointerEvent) => {
-      xTo(e.clientX);
-      yTo(e.clientY);
-      if (!isVisible) setIsVisible(true);
+      // Direct hardware-accelerated positioning for zero input latency
+      cursor.style.transform = `translate3d(${e.clientX}px, ${e.clientY}px, 0)`;
+
+      if (!isVisibleRef.current) {
+        isVisibleRef.current = true;
+        setIsVisible(true);
+      }
 
       const target = e.target as HTMLElement | null;
       if (!target) return;
 
+      // Check if hovering over native map canvas (OpenLayers viewport or marked native cursor element)
+      const overMapCanvas = Boolean(
+        target.closest('.ol-viewport, [data-native-cursor="true"]')
+      );
+      if (overMapCanvas !== isOverMapRef.current) {
+        isOverMapRef.current = overMapCanvas;
+        setIsOverMap(overMapCanvas);
+      }
+
+      // Check if hovering over an interactive element (buttons, links, inputs, cards)
       const interactive = Boolean(
         target.closest(
           'a, button, input, textarea, select, [role="button"], [role="link"], label, .cursor-pointer, [data-cursor="interactive"]'
         )
       );
-      setIsInteractive(interactive);
+      if (interactive !== isInteractiveRef.current) {
+        isInteractiveRef.current = interactive;
+        setIsInteractive(interactive);
+      }
     };
 
     const handlePointerDown = () => {
-      gsap.to(cursor, { scale: 0.88, duration: 0.12, ease: "power1.out" });
+      if (scaleWrap) {
+        // Subtle click pulse anchored strictly at the hotspot (0px 0px) to prevent tip jumping
+        gsap.to(scaleWrap, {
+          scale: 0.88,
+          duration: 0.1,
+          ease: "power1.out",
+          overwrite: "auto",
+        });
+      }
     };
 
     const handlePointerUp = () => {
-      gsap.to(cursor, { scale: 1.0, duration: 0.18, ease: "back.out(2)" });
+      if (scaleWrap) {
+        gsap.to(scaleWrap, {
+          scale: 1.0,
+          duration: 0.15,
+          ease: "back.out(2)",
+          overwrite: "auto",
+        });
+      }
     };
 
-    const handleMouseLeave = () => setIsVisible(false);
-    const handleMouseEnter = () => setIsVisible(true);
+    const handleMouseLeave = () => {
+      isVisibleRef.current = false;
+      setIsVisible(false);
+    };
+
+    const handleMouseEnter = () => {
+      isVisibleRef.current = true;
+      setIsVisible(true);
+    };
 
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
     window.addEventListener("pointerdown", handlePointerDown);
@@ -68,13 +112,13 @@ export function CustomCursor() {
       document.removeEventListener("mouseleave", handleMouseLeave);
       document.removeEventListener("mouseenter", handleMouseEnter);
     };
-  }, [isVisible]);
+  }, []);
 
   return (
     <div
       ref={cursorRef}
-      className={`custom-mars-cursor fixed top-0 left-0 z-[9999] pointer-events-none transition-opacity duration-150 select-none ${
-        isVisible ? "opacity-100" : "opacity-0"
+      className={`custom-mars-cursor fixed top-0 left-0 z-[9999] pointer-events-none select-none transition-opacity duration-150 ${
+        isVisible && !isOverMap ? "opacity-100" : "opacity-0"
       }`}
       style={{
         transform: "translate3d(-100px, -100px, 0)",
@@ -82,7 +126,11 @@ export function CustomCursor() {
       }}
       aria-hidden="true"
     >
-      <div className="relative">
+      <div
+        ref={scaleWrapRef}
+        style={{ transformOrigin: "0px 0px" }}
+        className="relative"
+      >
         {/* Subtle ambient Mars glow behind cursor */}
         <div
           className="absolute -inset-2 rounded-full blur-md pointer-events-none transition-opacity duration-200"
