@@ -499,14 +499,23 @@ export default function MapContainer() {
       const layer = registry[dataset.id];
       if (!layer) return;
 
-      if (dataset.isBaseMap) {
+      if (dataset.id === "viking-mdim21") {
         layer.setZIndex(1);
+      } else if (dataset.id === "mola-clrshade") {
+        layer.setZIndex(2);
+      } else if (dataset.id === "jez-ctx") {
+        // If CTX is acting as the base map, it sits at zIndex 3 (above Viking background at 1)
+        // If CTX is explicitly selected as an active overlay, promote it
+        const isSelected = selectedDatasetId === "jez-ctx";
+        const isActive = activeOverlayId === "jez-ctx";
+        layer.setZIndex(isSelected ? 18 : isActive ? 16 : 3);
       } else {
+        // Scientific overlays (HiRISE, THEMIS Day IR, THEMIS Night IR, Regional)
         const isSelected = selectedDatasetId === dataset.id;
         const isActive = activeOverlayId === dataset.id;
         const baseZ = dataset.zIndex ?? 10;
-        // Promote active/selected overlay to top of imagery stack so it is never occluded
-        layer.setZIndex(isSelected ? 18 : isActive ? 16 : baseZ);
+        // Overlays always render above basemaps; active/selected overlay gets top priority
+        layer.setZIndex(isSelected ? 20 : isActive ? 18 : baseZ + 5);
       }
     });
 

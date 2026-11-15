@@ -62,18 +62,18 @@ interface VisualizerState {
   setActiveDataset: (id: string) => void;
 }
 
-const BASEMAP_IDS = ["viking-mdim21", "mola-clrshade"];
+export const BASEMAP_IDS = ["viking-mdim21", "mola-clrshade", "jez-ctx"];
 
 export const useVisualizerStore = create<VisualizerState>((set) => ({
-  // Default: Viking Planetary Color as base, CTX 6m as high-res overlay
+  // Default: Viking Planetary Color as base (clean global Mars without occluding crater box)
   activeBaseMapId: "viking-mdim21",
-  activeOverlayId: "jez-ctx",
-  selectedDatasetId: "jez-ctx",
-  activeInspectorDatasetId: "jez-ctx",
+  activeOverlayId: "",
+  selectedDatasetId: "viking-mdim21",
+  activeInspectorDatasetId: "viking-mdim21",
   hoveredDatasetId: null,
 
-  // Both the global Viking color basemap AND CTX high-res overlay are active by default
-  visibleLayers: ["viking-mdim21", "jez-ctx"],
+  // Default: only the global Viking color basemap is active by default
+  visibleLayers: ["viking-mdim21"],
 
   layerOpacity: {
     "viking-mdim21": 1.0,
@@ -130,17 +130,26 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
   isMapReady: false,
   baseMapError: null,
 
-  // Set the planetary base map (Viking / MOLA)
+  // Set the planetary base map (Viking / MOLA / CTX)
   setBaseMap: (id) =>
     set((state) => {
       // Remove any previous basemap from visible layers
       const withoutBasemaps = state.visibleLayers.filter((l) => !BASEMAP_IDS.includes(l));
-      const nextVisible = id === "none" ? withoutBasemaps : [id, ...withoutBasemaps];
+      let nextVisible: string[];
+      if (id === "jez-ctx") {
+        nextVisible = ["jez-ctx", "viking-mdim21", ...withoutBasemaps];
+      } else if (id === "none") {
+        nextVisible = withoutBasemaps;
+      } else {
+        nextVisible = [id, ...withoutBasemaps];
+      }
       return {
         activeBaseMapId: id,
         selectedDatasetId: id,
         activeInspectorDatasetId: id,
         activeDatasetId: id,
+        activeOverlayId:
+          id === "jez-ctx" ? "jez-ctx" : state.activeOverlayId === "jez-ctx" ? "" : state.activeOverlayId,
         visibleLayers: nextVisible,
         baseMapError: null,
       };
@@ -150,7 +159,9 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
   setOverlay: (id) =>
     set((state) => {
       const baseMapId = state.activeBaseMapId;
-      const nextVisible = baseMapId && baseMapId !== "none" ? [baseMapId, id] : [id];
+      const baseLayers = baseMapId === "jez-ctx" ? ["jez-ctx", "viking-mdim21"] : [baseMapId];
+      const otherOverlays = state.visibleLayers.filter((l) => !BASEMAP_IDS.includes(l) && l !== id);
+      const nextVisible = [...baseLayers, ...otherOverlays, id];
       return {
         activeOverlayId: id,
         selectedDatasetId: id,
@@ -214,18 +225,30 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
     set((state) => {
       if (BASEMAP_IDS.includes(id)) {
         const withoutBasemaps = state.visibleLayers.filter((l) => !BASEMAP_IDS.includes(l));
+        let nextVisible: string[];
+        if (id === "jez-ctx") {
+          nextVisible = ["jez-ctx", "viking-mdim21", ...withoutBasemaps];
+        } else if (id === "none") {
+          nextVisible = withoutBasemaps;
+        } else {
+          nextVisible = [id, ...withoutBasemaps];
+        }
         return {
           activeBaseMapId: id,
           selectedDatasetId: id,
           activeInspectorDatasetId: id,
           activeDatasetId: id,
-          visibleLayers: id === "none" ? withoutBasemaps : [id, ...withoutBasemaps],
+          activeOverlayId:
+            id === "jez-ctx" ? "jez-ctx" : state.activeOverlayId === "jez-ctx" ? "" : state.activeOverlayId,
+          visibleLayers: nextVisible,
         };
       }
 
-      // If selecting a scientific overlay, make it the active overlay replacing previous overlay
+      // If selecting a scientific overlay (HiRISE, THEMIS, etc.), ensure it is visible and promoted to top
       const baseMapId = state.activeBaseMapId;
-      const nextVisible = baseMapId && baseMapId !== "none" ? [baseMapId, id] : [id];
+      const baseLayers = baseMapId === "jez-ctx" ? ["jez-ctx", "viking-mdim21"] : [baseMapId];
+      const otherOverlays = state.visibleLayers.filter((l) => !BASEMAP_IDS.includes(l) && l !== id);
+      const nextVisible = [...baseLayers, ...otherOverlays, id];
 
       return {
         activeOverlayId: id,

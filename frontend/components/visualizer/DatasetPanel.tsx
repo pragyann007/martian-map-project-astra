@@ -1,7 +1,7 @@
 "use client";
 
-import { MARS_DATASETS, VIKING_MDIM21, MOLA_CLRSHADE } from "@/lib/data/mars-datasets";
-import { useVisualizerStore } from "@/lib/state/visualizer-store";
+import { MARS_DATASETS, VIKING_MDIM21, MOLA_CLRSHADE, JEZ_CTX } from "@/lib/data/mars-datasets";
+import { useVisualizerStore, BASEMAP_IDS } from "@/lib/state/visualizer-store";
 import DatasetCard from "./DatasetCard";
 import {
   Globe,
@@ -40,10 +40,10 @@ export default function DatasetPanel() {
   const topActiveOverlay =
     MARS_DATASETS.find(
       (d) =>
-        !d.isBaseMap &&
+        !BASEMAP_IDS.includes(d.id) &&
         (d.id === selectedDatasetId || d.id === activeOverlayId) &&
         visibleLayers.includes(d.id)
-    ) || MARS_DATASETS.find((d) => !d.isBaseMap && visibleLayers.includes(d.id));
+    ) || MARS_DATASETS.find((d) => !BASEMAP_IDS.includes(d.id) && visibleLayers.includes(d.id));
 
   return (
     <div className="space-y-5 text-xs">
@@ -133,6 +133,43 @@ export default function DatasetPanel() {
             </div>
             <span className="text-[10px] font-mono text-[#80A49B] px-1.5 py-0.5 rounded bg-[#0B0D0E] border border-[#292F32] shrink-0">
               463 m/px
+            </span>
+          </button>
+
+          {/* MRO CTX Jezero Mosaic (High-Resolution Base Mosaic) */}
+          <button
+            type="button"
+            onClick={() => setBaseMap(JEZ_CTX.id)}
+            className={`p-2.5 rounded-md border text-left transition-all flex items-center justify-between gap-2.5 ${
+              activeBaseMapId === JEZ_CTX.id
+                ? "bg-[#171B1D] border-[#D97943] ring-1 ring-[#D97943]"
+                : "bg-[#101315] border-[#292F32] hover:border-[#929B9E]/40"
+            }`}
+          >
+            <div className="flex items-center space-x-2.5 min-w-0">
+              <div
+                className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${
+                  activeBaseMapId === JEZ_CTX.id
+                    ? "border-[#D97943] bg-[#D97943]"
+                    : "border-[#60686B] bg-[#0B0D0E]"
+                }`}
+              >
+                {activeBaseMapId === JEZ_CTX.id && (
+                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center space-x-1.5 text-xs font-medium text-[#E7E9E8]">
+                  <Layers className="w-3 h-3 text-[#E9A16A]" />
+                  <span>MRO CTX — Jezero Mosaic</span>
+                </div>
+                <div className="text-[10px] text-[#929B9E] truncate">
+                  High-res 6m crater relief + regional context
+                </div>
+              </div>
+            </div>
+            <span className="text-[10px] font-mono text-[#E9A16A] px-1.5 py-0.5 rounded bg-[#0B0D0E] border border-[#292F32] shrink-0">
+              6 m/px
             </span>
           </button>
         </div>
