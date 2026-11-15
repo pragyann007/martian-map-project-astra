@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SmoothScroll } from "@/components/SmoothScroll";
 import { CustomCursor } from "@/components/CustomCursor";
+import BackgroundAudio from "@/components/audio/BackgroundAudio";
 
 export const metadata: Metadata = {
   title: "MARTIAN MAP — Planetary Exploration & Dataset Visualizer | Project Astra",
@@ -52,6 +53,7 @@ export default function RootLayout({
       >
         <CustomCursor />
         <SmoothScroll>{children}</SmoothScroll>
+        <BackgroundAudio />
       </body>
     </html>
   );
