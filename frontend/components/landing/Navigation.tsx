@@ -87,13 +87,19 @@ export function Navigation() {
           </Link>
         </nav>
 
-        {/* Right CTA */}
-        <div className="pointer-events-auto">
+        {/* Right CTA: Visualizer button with white background and radiant glowing hover effect */}
+        <div className="pointer-events-auto relative group">
+          {/* Ambient luminous aura that blooms with a radiant glow on hover */}
+          <div className="absolute -inset-1 rounded-md bg-gradient-to-r from-white via-white/85 to-[#E9A16A]/75 opacity-30 group-hover:opacity-100 blur-md transition-all duration-300 pointer-events-none" />
+
           <Link
             href="/visualizer"
-            className="text-xs font-heading font-medium tracking-[0.2em] uppercase text-[#E9A16A] hover:text-white transition-colors"
+            className="relative inline-flex items-center justify-center px-4 py-2 sm:px-4.5 sm:py-2 text-xs font-heading font-bold tracking-[0.18em] uppercase text-[#090A0C] bg-white rounded-md border border-white shadow-[0_0_15px_rgba(255,255,255,0.45)] group-hover:shadow-[0_0_28px_rgba(255,255,255,0.95),0_0_50px_rgba(233,161,106,0.6)] group-hover:scale-105 active:scale-95 transition-all duration-300"
           >
-            VISUALIZER →
+            <span>VISUALIZER</span>
+            <span className="ml-1.5 inline-block transition-transform duration-200 group-hover:translate-x-1">
+              →
+            </span>
           </Link>
         </div>
       </div>
