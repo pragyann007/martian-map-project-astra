@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { MARS_LANDMARKS } from "@/lib/data/mars-datasets";
 import { useVisualizerStore } from "@/lib/state/visualizer-store";
 import type { MarsLandmark } from "@/lib/data/dataset.types";
@@ -11,7 +10,6 @@ import {
   Mountain,
   Search,
   Crosshair,
-  ExternalLink,
 } from "lucide-react";
 
 export default function LandmarksPanel() {
@@ -200,36 +198,23 @@ export default function LandmarksPanel() {
                     <span className="text-[#60686B] font-mono">
                       Source: {landmark.source}
                     </span>
-                    <div className="flex items-center space-x-2.5">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          open3DAtLocation({
-                            longitude: lon,
-                            latitude: lat,
-                            label: landmark.name,
-                            source: "landmark",
-                          });
-                        }}
-                        className="inline-flex items-center space-x-1 text-[#D97943] hover:text-[#E96A3D] font-mono hover:underline cursor-pointer"
-                        title={`View ${landmark.name} in 3D Mars Terrain Mode`}
-                      >
-                        <Mountain className="w-2.5 h-2.5" />
-                        <span>3D Terrain</span>
-                      </button>
-                      <span className="text-[#292F32]">|</span>
-                      <Link
-                        href={`/planner/terrain-explorer?lon=${lon}&lat=${lat}&source=landmark-${encodeURIComponent(
-                          landmark.name
-                        )}`}
-                        className="inline-flex items-center space-x-1 text-[#929B9E] hover:text-[#E7E9E8] font-mono hover:underline"
-                        title={`Inspect ${landmark.name} in Jezero 3D Explorer`}
-                      >
-                        <span>Jezero 3D</span>
-                        <ExternalLink className="w-2.5 h-2.5" />
-                      </Link>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        open3DAtLocation({
+                          longitude: lon,
+                          latitude: lat,
+                          label: landmark.name,
+                          source: "landmark",
+                        });
+                      }}
+                      className="inline-flex items-center space-x-1 text-[#D97943] hover:text-[#E96A3D] font-mono hover:underline cursor-pointer"
+                      title={`View ${landmark.name} in 3D Mars Terrain Mode`}
+                    >
+                      <Mountain className="w-2.5 h-2.5" />
+                      <span>3D Terrain ↗</span>
+                    </button>
                   </div>
                 </div>
               )}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import Map from "ol/Map";
 import View from "ol/View";
 import VectorLayer from "ol/layer/Vector";
@@ -31,7 +30,6 @@ import {
   Radio,
   Play,
   Pause,
-  Box,
 } from "lucide-react";
 
 function createRoverSvg(color: string): string {
@@ -501,15 +499,6 @@ export default function PlannerMap() {
         >
           Viking Color
         </button>
-        <span className="text-[#17191D] mx-0.5">|</span>
-        <Link
-          href={`/planner/terrain-explorer?lon=${startPoint.lon.toFixed(4)}&lat=${startPoint.lat.toFixed(4)}&source=map-hud`}
-          className="px-2.5 py-1 rounded text-[11px] font-semibold uppercase tracking-wider text-[#E9A16A] hover:bg-[#E9A16A]/15 border border-[#E9A16A]/40 flex items-center gap-1.5 transition-all"
-          title="Explore Jezero Crater in 3D first-person mode"
-        >
-          <Box className="w-3 h-3 text-[#E9A16A]" />
-          <span>3D View ↗</span>
-        </Link>
       </div>
 
       {/* Floating Zoom & Simulation Controls */}
@@ -563,14 +552,6 @@ export default function PlannerMap() {
         <span className="text-[#38BDF8]">START: CYAN PIN</span>
         <span>•</span>
         <span className="text-[#E9A16A]">TARGET: GOLD PIN</span>
-        <span>•</span>
-        <Link
-          href={`/planner/terrain-explorer?lon=${(mouseCoord || startPoint).lon.toFixed(4)}&lat=${(mouseCoord || startPoint).lat.toFixed(4)}&source=map-status`}
-          className="text-[#E9A16A] hover:underline uppercase text-[10px] font-sans font-semibold inline-flex items-center gap-1"
-          title="Inspect crater terrain around cursor/start in 3D"
-        >
-          <span>Explore in 3D ↗</span>
-        </Link>
       </div>
     </div>
   );
