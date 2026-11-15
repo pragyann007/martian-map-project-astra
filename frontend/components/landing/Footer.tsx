@@ -11,13 +11,15 @@ export function Footer() {
           {/* Brand Info with Logo */}
           <div className="space-y-4">
             <Link href="/" className="inline-block" aria-label="Project Astra Home">
-              <Image
-                src="/logomain-white.png"
-                alt="Project Astra"
-                width={130}
-                height={34}
-                className="h-7 w-auto object-contain hover:brightness-125 transition-all"
-              />
+              <div className="relative inline-flex items-center justify-center px-2.5 py-1 rounded-md bg-white border border-white/90 shadow-md">
+                <Image
+                  src="/logomain-white-bg.png"
+                  alt="Project Astra"
+                  width={120}
+                  height={32}
+                  className="h-6 w-auto object-contain"
+                />
+              </div>
             </Link>
             <p className="text-xs text-[#E8E5DF] leading-relaxed">
               Interplanetary exploration guide and dataset visualizer for
