@@ -15,6 +15,7 @@ import {
   PanelLeftOpen,
   CheckCircle2,
   Eye,
+  Mountain,
 } from "lucide-react";
 import DatasetPanel from "./DatasetPanel";
 import DatasetInspector from "./DatasetInspector";
@@ -36,6 +37,21 @@ const MapContainer = dynamic(() => import("./MapContainer"), {
   ),
 });
 
+// Mars 3D SceneView client-only dynamic import without SSR
+const Mars3DView = dynamic(() => import("./three-d/Mars3DView"), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full h-full flex-1 flex items-center justify-center bg-[#0B0D0E]">
+      <div className="flex flex-col items-center space-y-3 text-xs text-[#D97943]">
+        <div className="w-7 h-7 rounded-full border-2 border-[#D97943] border-t-transparent animate-spin" />
+        <span className="font-mono text-[11px] text-[#929B9E]">
+          Loading Mars 3D Terrain Engine...
+        </span>
+      </div>
+    </div>
+  ),
+});
+
 export default function VisualizerWorkspace() {
   const [mobileTab, setMobileTab] = useState<"map" | "sidebar">("map");
 
@@ -43,6 +59,9 @@ export default function VisualizerWorkspace() {
   const setSidebarOpen = useVisualizerStore((state) => state.setSidebarOpen);
   const activeSidebarTab = useVisualizerStore((state) => state.activeSidebarTab);
   const setActiveSidebarTab = useVisualizerStore((state) => state.setActiveSidebarTab);
+  const is3DMode = useVisualizerStore((state) => state.is3DMode);
+  const setIs3DMode = useVisualizerStore((state) => state.setIs3DMode);
+  const selectedMarsLocation = useVisualizerStore((state) => state.selectedMarsLocation);
 
   return (
     <div className="h-screen w-screen bg-[#0B0D0E] text-[#E7E9E8] flex flex-col font-sans overflow-hidden">
@@ -110,13 +129,36 @@ export default function VisualizerWorkspace() {
             </button>
           </div>
 
+          {/* 2D Map / 3D Terrain Viewport Mode Toggle */}
+          <div className="flex rounded bg-[#171B1D] p-0.5 border border-[#292F32]">
+            <button
+              onClick={() => setIs3DMode(false)}
+              className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors flex items-center space-x-1 ${
+                !is3DMode ? "bg-[#D97943] text-white" : "text-[#929B9E] hover:text-[#E7E9E8]"
+              }`}
+            >
+              <MapIcon className="w-3 h-3" />
+              <span>2D Map</span>
+            </button>
+            <button
+              onClick={() => setIs3DMode(true)}
+              className={`px-2.5 py-1 text-[11px] font-medium rounded transition-colors flex items-center space-x-1 ${
+                is3DMode ? "bg-[#D97943] text-white" : "text-[#929B9E] hover:text-[#E7E9E8]"
+              }`}
+              title="Switch to 3D Mars Terrain Mode (Caltech Global CTX Mosaic V01)"
+            >
+              <Mountain className="w-3 h-3" />
+              <span>3D Terrain</span>
+            </button>
+          </div>
+
           <Link
             href="/planner/terrain-explorer?lon=77.50&lat=18.50&source=visualizer"
-            className="hidden sm:inline-flex items-center space-x-1.5 text-xs text-[#E7E9E8] hover:text-[#D97943] transition-colors font-mono font-medium px-2.5 py-1 rounded bg-[#171B1D] border border-[#292F32] hover:border-[#D97943]/40"
+            className="hidden xl:inline-flex items-center space-x-1.5 text-xs text-[#E7E9E8] hover:text-[#D97943] transition-colors font-mono font-medium px-2.5 py-1 rounded bg-[#171B1D] border border-[#292F32] hover:border-[#D97943]/40"
             title="Explore Jezero Crater in 3D (First-Person)"
           >
             <Eye className="w-3 h-3 text-[#D97943]" />
-            <span>3D Explorer ↗</span>
+            <span>Jezero 3D ↗</span>
           </Link>
 
           <Link
@@ -131,6 +173,15 @@ export default function VisualizerWorkspace() {
 
       {/* Main Workspace Body */}
       <div className="flex-1 w-full flex flex-col lg:flex-row overflow-hidden relative min-h-0">
+        {/* Full 3D Terrain Experience when in 3D mode */}
+        {is3DMode && (
+          <div className="absolute inset-0 z-40 bg-[#0B0D0E]">
+            <Mars3DView
+              location={selectedMarsLocation}
+              onBackTo2D={() => setIs3DMode(false)}
+            />
+          </div>
+        )}
         {/* Left Sidebar: Dataset Selection & Inspector (Target 350px) */}
         <aside
           className={`w-full lg:w-[350px] border-b lg:border-b-0 lg:border-r border-[#292F32] bg-[#101315] flex flex-col z-20 shrink-0 h-full overflow-hidden transition-all duration-200 ease-in-out ${

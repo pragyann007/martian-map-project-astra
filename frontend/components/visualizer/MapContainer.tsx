@@ -37,6 +37,7 @@ import {
   MapPin,
   Grid,
   Layers,
+  Mountain,
 } from "lucide-react";
 
 export default function MapContainer() {
@@ -70,6 +71,7 @@ export default function MapContainer() {
   const [mouseCoord, setMouseCoord] = useState<{ lon: string; lat: string } | null>(null);
   const [currentZoom, setCurrentZoom] = useState<string>("9.5");
   const [hoveredLandmark, setHoveredLandmark] = useState<string | null>(null);
+  const hoveredLandmarkRef = useRef<string | null>(null);
 
   // Store bindings
   const visibleLayers = useVisualizerStore((state) => state.visibleLayers);
@@ -94,6 +96,9 @@ export default function MapContainer() {
   const setShowFootprints = useVisualizerStore((state) => state.setShowFootprints);
   const setIsMapReady = useVisualizerStore((state) => state.setIsMapReady);
   const setBaseMapError = useVisualizerStore((state) => state.setBaseMapError);
+  const setSelectedMarsLocation = useVisualizerStore((state) => state.setSelectedMarsLocation);
+  const open3DAtLocation = useVisualizerStore((state) => state.open3DAtLocation);
+  const is3DMode = useVisualizerStore((state) => state.is3DMode);
 
   useEffect(() => {
     selectedLandmarkIdRef.current = selectedLandmarkId;
@@ -102,6 +107,16 @@ export default function MapContainer() {
     showFootprintsRef.current = showFootprints;
     activeBaseMapIdRef.current = activeBaseMapId;
   }, [selectedLandmarkId, hoveredDatasetId, selectedDatasetId, showFootprints, activeBaseMapId]);
+
+  // Keep OpenLayers canvas size synchronized when returning from 3D mode
+  useEffect(() => {
+    if (!is3DMode && mapInstanceRef.current) {
+      const timer = setTimeout(() => {
+        mapInstanceRef.current?.updateSize();
+      }, 60);
+      return () => clearTimeout(timer);
+    }
+  }, [is3DMode]);
 
   const activeBaseMap = MARS_DATASETS.find((d) => d.id === activeBaseMapId) || MARS_DATASETS[0];
   const activeOverlayCount = visibleLayers.filter(
@@ -413,13 +428,32 @@ export default function MapContainer() {
           const name = feature.get("name") as string | undefined;
           if (name) {
             setHoveredLandmark(name);
+            hoveredLandmarkRef.current = name;
             hit = true;
             return true;
           }
         },
         { layerFilter: (l) => l === landmarksLayer }
       );
-      if (!hit) setHoveredLandmark(null);
+      if (!hit) {
+        setHoveredLandmark(null);
+        hoveredLandmarkRef.current = null;
+      }
+    });
+
+    // Capture map click to update selected Mars location for 3D hand-off
+    map.on("click", (event) => {
+      const coord = event.coordinate;
+      if (coord && typeof coord[0] === "number" && typeof coord[1] === "number") {
+        const lon = Number(coord[0].toFixed(4));
+        const lat = Number(coord[1].toFixed(4));
+        setSelectedMarsLocation({
+          longitude: lon,
+          latitude: lat,
+          label: hoveredLandmarkRef.current ?? `Mars (${lon.toFixed(2)}° E, ${lat.toFixed(2)}° N)`,
+          source: "map-click",
+        });
+      }
     });
 
     map.on("moveend", () => {
@@ -473,7 +507,7 @@ export default function MapContainer() {
       landmarksLayerRef.current = null;
       footprintsLayerRef.current = null;
     };
-  }, [setTileLoading, setIsMapReady, setBaseMapError]);
+  }, [setTileLoading, setIsMapReady, setBaseMapError, setSelectedMarsLocation]);
 
   // Synchronize layer visibility from Zustand without reconstructing map
   useEffect(() => {
@@ -752,6 +786,26 @@ export default function MapContainer() {
           </span>
           <span className="text-[#292F32] hidden sm:inline">|</span>
           <span className="text-[10px] text-[#929B9E] hidden sm:inline">MARS EQ (IAU 2000)</span>
+          <span className="text-[#292F32]">|</span>
+          <button
+            onClick={() => {
+              if (mouseCoord) {
+                open3DAtLocation({
+                  longitude: Number(mouseCoord.lon),
+                  latitude: Number(mouseCoord.lat),
+                  label: hoveredLandmark ?? `Point (${mouseCoord.lon}° E, ${mouseCoord.lat}° N)`,
+                  source: "status-ribbon",
+                });
+              } else {
+                open3DAtLocation();
+              }
+            }}
+            className="text-[10px] text-[#D97943] hover:text-[#E96A3D] font-mono hover:underline inline-flex items-center gap-1 font-semibold cursor-pointer"
+            title="Explore current coordinates in 3D Mars Terrain mode"
+          >
+            <Mountain className="w-3 h-3 text-[#D97943]" />
+            <span>3D Terrain ↗</span>
+          </button>
         </div>
 
         {/* Active Base Map & Stream Status Indicator */}

@@ -3,7 +3,21 @@ import type { BlendMode } from "@/lib/data/dataset.types";
 
 export type VisualizerTab = "layers" | "landmarks" | "details" | "telemetry";
 
+export interface MarsLocation {
+  longitude: number; // east-positive Mars longitude in degrees (-180 to 180)
+  latitude: number;  // Mars latitude in degrees (-90 to 90)
+  label?: string;
+  source?: string;
+}
+
 interface VisualizerState {
+  // 3D Terrain Mode State
+  is3DMode: boolean;
+  selectedMarsLocation: MarsLocation | null;
+  setIs3DMode: (active: boolean) => void;
+  setSelectedMarsLocation: (loc: MarsLocation | null) => void;
+  open3DAtLocation: (loc?: MarsLocation) => void;
+
   // Base map & Overlay IDs
   activeBaseMapId: string;
   activeOverlayId: string;
@@ -65,6 +79,22 @@ interface VisualizerState {
 export const BASEMAP_IDS = ["viking-mdim21", "mola-clrshade", "jez-ctx"];
 
 export const useVisualizerStore = create<VisualizerState>((set) => ({
+  // 3D Terrain Mode State
+  is3DMode: false,
+  selectedMarsLocation: {
+    longitude: 77.45,
+    latitude: 18.45,
+    label: "Jezero Crater Exploration Area",
+    source: "default",
+  },
+  setIs3DMode: (active) => set({ is3DMode: active }),
+  setSelectedMarsLocation: (loc) => set({ selectedMarsLocation: loc }),
+  open3DAtLocation: (loc) =>
+    set((state) => ({
+      is3DMode: true,
+      selectedMarsLocation: loc ?? state.selectedMarsLocation,
+    })),
+
   // Default: Viking Planetary Color as base (clean global Mars without occluding crater box)
   activeBaseMapId: "viking-mdim21",
   activeOverlayId: "",
