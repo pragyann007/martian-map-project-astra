@@ -146,12 +146,11 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
       };
     }),
 
-  // Set the active scientific overlay: promotes to active view and guarantees visibility
+  // Set the active scientific overlay: promotes to active view and replaces previous overlay cleanly
   setOverlay: (id) =>
     set((state) => {
-      const nextVisible = state.visibleLayers.includes(id)
-        ? state.visibleLayers
-        : [...state.visibleLayers, id];
+      const baseMapId = state.activeBaseMapId;
+      const nextVisible = baseMapId && baseMapId !== "none" ? [baseMapId, id] : [id];
       return {
         activeOverlayId: id,
         selectedDatasetId: id,
@@ -161,7 +160,7 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
       };
     }),
 
-  // Toggle an overlay on / off
+  // Toggle an overlay on / off independently in the stack
   toggleOverlay: (id) =>
     set((state) => {
       const isVisible = state.visibleLayers.includes(id);
@@ -224,10 +223,9 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
         };
       }
 
-      // If selecting an overlay, ensure it is visible and set as active overlay on top
-      const nextVisible = state.visibleLayers.includes(id)
-        ? state.visibleLayers
-        : [...state.visibleLayers, id];
+      // If selecting a scientific overlay, make it the active overlay replacing previous overlay
+      const baseMapId = state.activeBaseMapId;
+      const nextVisible = baseMapId && baseMapId !== "none" ? [baseMapId, id] : [id];
 
       return {
         activeOverlayId: id,

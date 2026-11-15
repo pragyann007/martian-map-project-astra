@@ -32,6 +32,7 @@ export function createTrekWmtsGrid(maxNativeZoom: number): WMTSTileGrid {
 
 /**
  * Construct an OpenLayers WMTS source configured for NASA Mars Trek RESTful tile services.
+ * Specifies crossOrigin: "anonymous" to support hardware-accelerated canvas filter adjustments.
  */
 export function createTrekWmtsSource(dataset: MarsWmtsDataset): WMTS {
   const ext = dataset.format === "image/jpeg" ? "jpg" : "png";
@@ -47,9 +48,11 @@ export function createTrekWmtsSource(dataset: MarsWmtsDataset): WMTS {
     tileGrid: createTrekWmtsGrid(dataset.maxNativeZoom),
     style: "default",
     wrapX: false,
+    crossOrigin: "anonymous",
     attributions: dataset.attribution,
     tileLoadFunction: (tile, src) => {
       const img = (tile as ImageTile).getImage() as HTMLImageElement;
+      img.crossOrigin = "anonymous";
       // Missing tiles (HTTP 404) are normal in NASA Trek for regional mosaics outside their coverage.
       img.onerror = () => {
         // Transparent fallback prevents broken image icons on the canvas

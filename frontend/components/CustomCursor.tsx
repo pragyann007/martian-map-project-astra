@@ -1,10 +1,30 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import Image from "next/image";
 import gsap from "gsap";
 
 export function CustomCursor() {
+  const pathname = usePathname();
+
+  useEffect(() => {
+    // Custom cursor is strictly active on the landing page ("/")
+    // For all other pages (/visualizer, /planner, etc.), ensure the OS cursor class is immediately stripped
+    if (pathname !== "/") {
+      document.documentElement.classList.remove("custom-cursor-active");
+    }
+  }, [pathname]);
+
+  // NEVER render custom cursor DOM elements or attach pointer listeners anywhere except "/"
+  if (pathname !== "/") {
+    return null;
+  }
+
+  return <LandingCustomCursor />;
+}
+
+function LandingCustomCursor() {
   const cursorRef = useRef<HTMLDivElement>(null);
   const scaleWrapRef = useRef<HTMLDivElement>(null);
 
@@ -23,6 +43,7 @@ export function CustomCursor() {
     const prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     if (!isFinePointer || prefersReduced) {
+      document.documentElement.classList.remove("custom-cursor-active");
       return;
     }
 
@@ -88,29 +109,29 @@ export function CustomCursor() {
       }
     };
 
-    const handleMouseLeave = () => {
+    const handlePointerLeave = () => {
       isVisibleRef.current = false;
       setIsVisible(false);
     };
 
-    const handleMouseEnter = () => {
+    const handlePointerEnter = () => {
       isVisibleRef.current = true;
       setIsVisible(true);
     };
 
     window.addEventListener("pointermove", handlePointerMove, { passive: true });
-    window.addEventListener("pointerdown", handlePointerDown);
-    window.addEventListener("pointerup", handlePointerUp);
-    document.addEventListener("mouseleave", handleMouseLeave);
-    document.addEventListener("mouseenter", handleMouseEnter);
+    window.addEventListener("pointerdown", handlePointerDown, { passive: true });
+    window.addEventListener("pointerup", handlePointerUp, { passive: true });
+    document.addEventListener("mouseleave", handlePointerLeave);
+    document.addEventListener("mouseenter", handlePointerEnter);
 
     return () => {
       document.documentElement.classList.remove("custom-cursor-active");
       window.removeEventListener("pointermove", handlePointerMove);
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("pointerup", handlePointerUp);
-      document.removeEventListener("mouseleave", handleMouseLeave);
-      document.removeEventListener("mouseenter", handleMouseEnter);
+      document.removeEventListener("mouseleave", handlePointerLeave);
+      document.removeEventListener("mouseenter", handlePointerEnter);
     };
   }, []);
 
@@ -124,38 +145,32 @@ export function CustomCursor() {
         transform: "translate3d(-100px, -100px, 0)",
         willChange: "transform",
       }}
-      aria-hidden="true"
     >
+      {/* Click pulse wrapper strictly anchored at top-left hotspot */}
       <div
         ref={scaleWrapRef}
-        style={{ transformOrigin: "0px 0px" }}
-        className="relative"
+        className="relative origin-top-left"
+        style={{
+          transformOrigin: "0px 0px",
+        }}
       >
         {/* Subtle ambient Mars glow behind cursor */}
-        <div
-          className="absolute -inset-2 rounded-full blur-md pointer-events-none transition-opacity duration-200"
-          style={{
-            background: isInteractive
-              ? "radial-gradient(circle, rgba(233,106,61,0.7) 0%, transparent 70%)"
-              : "radial-gradient(circle, rgba(230,80,30,0.5) 0%, transparent 70%)",
-            opacity: isInteractive ? 0.6 : 0.35,
-          }}
-        />
+        <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-[#E96A3D]/15 blur-[6px] pointer-events-none" />
 
-        {/* Mars-inspired Triangular Pointer (hotspot at apex: x: ~2px, y: ~1px) */}
+        {/* Mars-themed Pointer Arrow (hotspot at tip: x: ~2px, y: ~2px) */}
         <div
-          className={`relative transform -translate-x-[2px] -translate-y-[1px] transition-opacity duration-150 ${
-            isInteractive ? "opacity-0 pointer-events-none absolute inset-0" : "opacity-100"
+          className={`relative transform -translate-x-[2px] -translate-y-[2px] transition-opacity duration-150 ${
+            !isInteractive ? "opacity-100" : "opacity-0 pointer-events-none absolute inset-0"
           }`}
           style={{
-            filter: "drop-shadow(0 0 6px rgba(233, 106, 61, 0.55))",
+            filter: "drop-shadow(0 0 5px rgba(233, 106, 61, 0.45))",
           }}
         >
           <Image
             src="/cursor-pointer.png"
             alt="Pointer cursor"
-            width={26}
-            height={29}
+            width={24}
+            height={24}
             className="w-6 h-auto select-none pointer-events-none"
             priority
             unoptimized

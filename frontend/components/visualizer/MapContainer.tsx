@@ -53,6 +53,7 @@ export default function MapContainer() {
   const hoveredDatasetIdRef = useRef<string | null>(null);
   const selectedDatasetIdRef = useRef<string>("jez-ctx");
   const showFootprintsRef = useRef<boolean>(false);
+  const activeBaseMapIdRef = useRef<string>("viking-mdim21");
 
   const filtersRef = useRef<{
     brightness: Record<string, number>;
@@ -99,7 +100,8 @@ export default function MapContainer() {
     hoveredDatasetIdRef.current = hoveredDatasetId;
     selectedDatasetIdRef.current = selectedDatasetId;
     showFootprintsRef.current = showFootprints;
-  }, [selectedLandmarkId, hoveredDatasetId, selectedDatasetId, showFootprints]);
+    activeBaseMapIdRef.current = activeBaseMapId;
+  }, [selectedLandmarkId, hoveredDatasetId, selectedDatasetId, showFootprints, activeBaseMapId]);
 
   const activeBaseMap = MARS_DATASETS.find((d) => d.id === activeBaseMapId) || MARS_DATASETS[0];
   const activeOverlayCount = visibleLayers.filter(
@@ -130,8 +132,12 @@ export default function MapContainer() {
     const initialLayers: Layer[] = [];
 
     // 1. Build imagery raster & tile layers (Base Maps + Scientific Overlays)
+    const initialVisible = useVisualizerStore.getState().visibleLayers || [];
     MARS_DATASETS.forEach((dataset) => {
       const layer = createDatasetLayer(dataset);
+      // Initialize visibility directly matching current store state
+      const isVisible = initialVisible.includes(dataset.id);
+      layer.setVisible(isVisible);
       layerRegistry[dataset.id] = layer;
       initialLayers.push(layer);
 
@@ -170,13 +176,13 @@ export default function MapContainer() {
           });
           s.on("tileloadend", () => {
             setTileLoading(-1);
-            if (dataset.id === activeBaseMapId) {
+            if (dataset.id === activeBaseMapIdRef.current) {
               setIsMapReady(true);
             }
           });
           s.on("tileloaderror", () => {
             setTileLoading(-1);
-            if (dataset.id === activeBaseMapId) {
+            if (dataset.id === activeBaseMapIdRef.current) {
               setBaseMapError(`Failed to load ${dataset.shortName} tiles from NASA Trek.`);
             }
           });
@@ -467,11 +473,12 @@ export default function MapContainer() {
       landmarksLayerRef.current = null;
       footprintsLayerRef.current = null;
     };
-  }, [setTileLoading, activeBaseMapId, setIsMapReady, setBaseMapError]);
+  }, [setTileLoading, setIsMapReady, setBaseMapError]);
 
   // Synchronize layer visibility from Zustand without reconstructing map
   useEffect(() => {
     const registry = layersMapRef.current;
+    if (!registry) return;
     const layers = visibleLayers || [];
     Object.keys(registry).forEach((id) => {
       const layer = registry[id];
@@ -480,9 +487,10 @@ export default function MapContainer() {
         layer.setVisible(isVisible);
       }
     });
+    mapInstanceRef.current?.render();
   }, [visibleLayers]);
 
-  // Dynamically promote the selected/active overlay to the top z-index (16)
+  // Dynamically promote the selected/active overlay to the top z-index (18 / 16)
   useEffect(() => {
     const registry = layersMapRef.current;
     if (!registry) return;
@@ -494,10 +502,11 @@ export default function MapContainer() {
       if (dataset.isBaseMap) {
         layer.setZIndex(1);
       } else {
-        const isTop = selectedDatasetId === dataset.id || activeOverlayId === dataset.id;
+        const isSelected = selectedDatasetId === dataset.id;
+        const isActive = activeOverlayId === dataset.id;
         const baseZ = dataset.zIndex ?? 10;
         // Promote active/selected overlay to top of imagery stack so it is never occluded
-        layer.setZIndex(isTop ? 16 : baseZ);
+        layer.setZIndex(isSelected ? 18 : isActive ? 16 : baseZ);
       }
     });
 
@@ -535,7 +544,7 @@ export default function MapContainer() {
     if (footprintsLayerRef.current) {
       footprintsLayerRef.current.changed();
     }
-  }, [showFootprints, hoveredDatasetId, selectedDatasetId]);
+  }, [showFootprints, hoveredDatasetId, selectedDatasetId, activeOverlayId]);
 
   // Apply Hardware-Accelerated Canvas Filters (Brightness, Contrast, BlendMode)
   useEffect(() => {
