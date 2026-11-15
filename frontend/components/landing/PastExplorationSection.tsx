@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import {
   ExternalLink,
   Radio,
@@ -28,6 +29,7 @@ interface TimelineItem {
   agency: string;
   milestone: string;
   impact: string;
+  image: string;
   icon: typeof Radio;
   telemetry: string;
   badge: string;
@@ -44,6 +46,7 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
     milestone: "Captured the first close-up photographs of another planet.",
     impact:
       'Sent back 21 grainy images revealing a cratered, desert-like world rather than artificial "canals."',
+    image: "/assets/missions/mariner-4.jpg",
     icon: Radio,
     telemetry: "Closest Approach: 9,846 km // 21 Telemetry Frames",
     badge: "FIRST PLANETARY FLYBY",
@@ -59,6 +62,7 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
       "Mariner 9 became the first spacecraft to orbit Mars, mapping approximately 80% of its surface.",
     impact:
       "The Soviet Mars 3 achieved the first soft touchdown on Martian soil before losing contact after approximately 20 seconds.",
+    image: "/assets/missions/mariner-9-mars-3.jpg",
     icon: NavIcon,
     telemetry: "7,329 Orbital Photos // First Planetary Soft Landing",
     badge: "FIRST ORBIT & TOUCHDOWN",
@@ -74,6 +78,7 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
       "The first successful landers to operate on Mars for extended periods.",
     impact:
       "Captured the first clear color panoramas from the surface and conducted biology experiments on Martian soil.",
+    image: "/assets/missions/viking-1-2.jpg",
     icon: Activity,
     telemetry: "6+ Years Surface Ops // Biological Soil Gas Chromatograph",
     badge: "FIRST SURFACE LABORATORIES",
@@ -88,6 +93,7 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
     milestone: "Deployed Sojourner, a microwave-sized, six-wheeled rover.",
     impact:
       "Demonstrated that mobile robots could navigate rocky Martian terrain and independently analyze rocks.",
+    image: "/assets/missions/pathfinder-sojourner.jpg",
     icon: Compass,
     telemetry: "11.5 kg Mass // Alpha Proton X-Ray Spectrometer (APXS)",
     badge: "FIRST WHEELED ROBOTIC ROVER",
@@ -103,6 +109,7 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
       "Spirit and Opportunity explored Mars for years, with Opportunity lasting over 14 years.",
     impact:
       "Their discoveries provided evidence of ancient liquid water. Phoenix uncovered subsurface water ice in 2008, while InSight studied the Martian interior and recorded more than 1,300 marsquakes.",
+    image: "/assets/missions/water-and-interior.jpg",
     icon: Layers,
     telemetry: "14+ Yrs Traverse // SEIS Recorded 1,300+ Marsquakes",
     badge: "WATER EVIDENCE & SEISMOLOGY",
@@ -250,23 +257,54 @@ export function PastExplorationSection() {
                         </h3>
                       </div>
 
-                      <div className="space-y-3 text-sm sm:text-base leading-relaxed">
-                        {/* Milestone details */}
-                        <div className="p-4 rounded-sm bg-white/[0.04] border border-white/10 space-y-1">
-                          <div className="text-[11px] font-mono uppercase tracking-wider text-[#E9A16A] font-bold flex items-center space-x-1.5">
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#E96A3D]" />
-                            <span>Mission Milestone:</span>
+                      {/* Content + Archival Mission Photograph Grid */}
+                      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+                        {/* Text columns: Milestone and Scientific impact */}
+                        <div className="lg:col-span-7 space-y-3 flex flex-col justify-between">
+                          {/* Milestone details */}
+                          <div className="p-4 rounded-sm bg-white/[0.04] border border-white/10 space-y-1">
+                            <div className="text-[11px] font-mono uppercase tracking-wider text-[#E9A16A] font-bold flex items-center space-x-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#E96A3D]" />
+                              <span>Mission Milestone:</span>
+                            </div>
+                            <p className="text-white font-medium pl-5 text-sm sm:text-base leading-relaxed">
+                              {item.milestone}
+                            </p>
                           </div>
-                          <p className="text-white font-medium pl-5">{item.milestone}</p>
+
+                          {/* Scientific impact details */}
+                          <div className="p-4 rounded-sm bg-white/[0.04] border border-white/10 space-y-1">
+                            <div className="text-[11px] font-mono uppercase tracking-wider text-[#E8E5DF]/80 font-bold flex items-center space-x-1.5">
+                              <Sparkles className="w-3.5 h-3.5 text-[#E9A16A]" />
+                              <span>Scientific Impact:</span>
+                            </div>
+                            <p className="text-[#E8E5DF] pl-5 text-sm sm:text-base leading-relaxed">
+                              {item.impact}
+                            </p>
+                          </div>
                         </div>
 
-                        {/* Scientific impact details */}
-                        <div className="p-4 rounded-sm bg-white/[0.04] border border-white/10 space-y-1">
-                          <div className="text-[11px] font-mono uppercase tracking-wider text-[#E8E5DF]/80 font-bold flex items-center space-x-1.5">
-                            <Sparkles className="w-3.5 h-3.5 text-[#E9A16A]" />
-                            <span>Scientific Impact:</span>
+                        {/* Mission Archival Image Showcase */}
+                        <div className="lg:col-span-5 relative min-h-[190px] sm:min-h-[210px] rounded-sm border border-white/20 hover:border-[#E96A3D]/70 overflow-hidden bg-black/60 shadow-lg group/img transition-all duration-300">
+                          <Image
+                            src={item.image}
+                            alt={item.heading}
+                            fill
+                            className="object-cover object-center group-hover/img:scale-105 transition-transform duration-500"
+                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 35vw, 320px"
+                          />
+                          {/* Archival dark gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
+
+                          {/* Archival tag badge */}
+                          <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-xs bg-black/80 border border-white/20 text-[9px] font-mono uppercase tracking-widest text-[#E9A16A]">
+                            ARCHIVAL
                           </div>
-                          <p className="text-[#E8E5DF] pl-5">{item.impact}</p>
+
+                          {/* Bottom caption with spacecraft name */}
+                          <div className="absolute bottom-2.5 left-3 right-3 text-[11px] font-mono text-white font-medium truncate drop-shadow-md">
+                            {item.spacecraft}
+                          </div>
                         </div>
                       </div>
 
