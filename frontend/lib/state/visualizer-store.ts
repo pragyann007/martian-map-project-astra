@@ -140,12 +140,13 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
         activeBaseMapId: id,
         selectedDatasetId: id,
         activeInspectorDatasetId: id,
+        activeDatasetId: id,
         visibleLayers: nextVisible,
         baseMapError: null,
       };
     }),
 
-  // Set the active scientific overlay
+  // Set the active scientific overlay: promotes to active view and guarantees visibility
   setOverlay: (id) =>
     set((state) => {
       const nextVisible = state.visibleLayers.includes(id)
@@ -167,9 +168,25 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
       const nextVisible = isVisible
         ? state.visibleLayers.filter((layerId) => layerId !== id)
         : [...state.visibleLayers, id];
+
+      const nextActiveOverlay = isVisible
+        ? (state.activeOverlayId === id
+            ? nextVisible.find((l) => !BASEMAP_IDS.includes(l)) || ""
+            : state.activeOverlayId)
+        : id;
+
+      const nextSelected = isVisible
+        ? (state.selectedDatasetId === id
+            ? nextActiveOverlay || state.activeBaseMapId
+            : state.selectedDatasetId)
+        : id;
+
       return {
         visibleLayers: nextVisible,
-        activeOverlayId: isVisible ? state.activeOverlayId : id,
+        activeOverlayId: nextActiveOverlay,
+        selectedDatasetId: nextSelected,
+        activeInspectorDatasetId: nextSelected,
+        activeDatasetId: nextSelected,
       };
     }),
 
@@ -183,6 +200,7 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
         const nextVisible = targetId === "none" ? withoutBasemaps : [targetId, ...withoutBasemaps];
         return {
           activeBaseMapId: targetId,
+          selectedDatasetId: targetId === "none" ? state.selectedDatasetId : targetId,
           visibleLayers: nextVisible,
         };
       }
@@ -194,7 +212,31 @@ export const useVisualizerStore = create<VisualizerState>((set) => ({
     }),
 
   setSelectedDataset: (id) =>
-    set({ selectedDatasetId: id, activeInspectorDatasetId: id, activeDatasetId: id }),
+    set((state) => {
+      if (BASEMAP_IDS.includes(id)) {
+        const withoutBasemaps = state.visibleLayers.filter((l) => !BASEMAP_IDS.includes(l));
+        return {
+          activeBaseMapId: id,
+          selectedDatasetId: id,
+          activeInspectorDatasetId: id,
+          activeDatasetId: id,
+          visibleLayers: id === "none" ? withoutBasemaps : [id, ...withoutBasemaps],
+        };
+      }
+
+      // If selecting an overlay, ensure it is visible and set as active overlay on top
+      const nextVisible = state.visibleLayers.includes(id)
+        ? state.visibleLayers
+        : [...state.visibleLayers, id];
+
+      return {
+        activeOverlayId: id,
+        selectedDatasetId: id,
+        activeInspectorDatasetId: id,
+        activeDatasetId: id,
+        visibleLayers: nextVisible,
+      };
+    }),
 
   setHoveredDataset: (id) => set({ hoveredDatasetId: id }),
 

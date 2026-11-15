@@ -76,6 +76,11 @@ export default function DatasetCard({ dataset, isActive, onSelect }: DatasetCard
             >
               {dataset.shortName || dataset.name}
             </span>
+            {isActive && isVisible && (
+              <span className="text-[9px] font-mono px-1.5 py-0.2 rounded bg-[#D97943]/20 text-[#D97943] border border-[#D97943]/40 shrink-0">
+                ON TOP
+              </span>
+            )}
           </div>
 
           <div className="flex items-center space-x-1.5 text-[11px] text-[#929B9E] font-mono mt-0.5">

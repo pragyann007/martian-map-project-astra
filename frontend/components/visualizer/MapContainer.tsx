@@ -21,6 +21,7 @@ import {
   JEZ_CTX,
   JEZ_HIRISE,
   JEZ_REGIONAL_VISIBLE,
+  THEMIS_DAY_LOCAL,
 } from "@/lib/data/mars-datasets";
 import { MARS_GEOGRAPHIC } from "@/lib/map/mars-projection";
 import { createDatasetLayer } from "@/lib/map/layer-factory";
@@ -83,6 +84,7 @@ export default function MapContainer() {
   const landmarkNonce = useVisualizerStore((state) => state.landmarkNonce);
 
   const activeBaseMapId = useVisualizerStore((state) => state.activeBaseMapId);
+  const activeOverlayId = useVisualizerStore((state) => state.activeOverlayId);
   const selectedDatasetId = useVisualizerStore((state) => state.selectedDatasetId);
   const hoveredDatasetId = useVisualizerStore((state) => state.hoveredDatasetId);
 
@@ -212,6 +214,11 @@ export default function MapContainer() {
         geometry: fromExtent(JEZ_REGIONAL_VISIBLE.extent),
         name: "Regional Visible Composite (~12 m/px)",
         datasetId: "jez-regional-visible",
+      }),
+      new Feature({
+        geometry: fromExtent(THEMIS_DAY_LOCAL.extent),
+        name: "THEMIS Day IR (Local Masked)",
+        datasetId: "themis-day",
       }),
     ];
 
@@ -474,6 +481,28 @@ export default function MapContainer() {
       }
     });
   }, [visibleLayers]);
+
+  // Dynamically promote the selected/active overlay to the top z-index (16)
+  useEffect(() => {
+    const registry = layersMapRef.current;
+    if (!registry) return;
+
+    MARS_DATASETS.forEach((dataset) => {
+      const layer = registry[dataset.id];
+      if (!layer) return;
+
+      if (dataset.isBaseMap) {
+        layer.setZIndex(1);
+      } else {
+        const isTop = selectedDatasetId === dataset.id || activeOverlayId === dataset.id;
+        const baseZ = dataset.zIndex ?? 10;
+        // Promote active/selected overlay to top of imagery stack so it is never occluded
+        layer.setZIndex(isTop ? 16 : baseZ);
+      }
+    });
+
+    mapInstanceRef.current?.render();
+  }, [selectedDatasetId, activeOverlayId, visibleLayers]);
 
   // Synchronize layer opacity from Zustand
   useEffect(() => {

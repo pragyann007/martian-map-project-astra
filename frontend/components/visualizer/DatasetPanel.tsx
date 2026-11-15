@@ -9,15 +9,16 @@ import {
   Mountain,
   Grid,
   Layers,
-  Info,
 } from "lucide-react";
 
 export default function DatasetPanel() {
   const activeBaseMapId = useVisualizerStore((state) => state.activeBaseMapId);
+  const activeOverlayId = useVisualizerStore((state) => state.activeOverlayId);
   const selectedDatasetId = useVisualizerStore((state) => state.selectedDatasetId);
   const visibleLayers = useVisualizerStore((state) => state.visibleLayers);
   const setBaseMap = useVisualizerStore((state) => state.setBaseMap);
   const setSelectedDataset = useVisualizerStore((state) => state.setSelectedDataset);
+  const toggleOverlay = useVisualizerStore((state) => state.toggleOverlay);
 
   const showGraticule = useVisualizerStore((state) => state.showGraticule);
   const showLandmarks = useVisualizerStore((state) => state.showLandmarks);
@@ -36,7 +37,13 @@ export default function DatasetPanel() {
     (d) => d.role === "overlay" && d.category === "thermal"
   );
 
-  const isCtxActive = visibleLayers.includes("jez-ctx");
+  const topActiveOverlay =
+    MARS_DATASETS.find(
+      (d) =>
+        !d.isBaseMap &&
+        (d.id === selectedDatasetId || d.id === activeOverlayId) &&
+        visibleLayers.includes(d.id)
+    ) || MARS_DATASETS.find((d) => !d.isBaseMap && visibleLayers.includes(d.id));
 
   return (
     <div className="space-y-5 text-xs">
@@ -130,13 +137,23 @@ export default function DatasetPanel() {
           </button>
         </div>
 
-        {/* Notice when high-resolution CTX overlay is rendered above base map */}
-        {isCtxActive && (
-          <div className="p-2 rounded bg-[#171B1D]/60 border border-[#292F32] flex items-center justify-between text-[11px] text-[#929B9E]">
-            <span className="flex items-center space-x-1">
-              <Info className="w-3 h-3 text-[#D97943] shrink-0" />
-              <span>CTX overlay is active in Jezero Crater</span>
+        {/* Dynamic active top overlay status banner */}
+        {topActiveOverlay && (
+          <div className="p-2 rounded bg-[#171B1D] border border-[#292F32] flex items-center justify-between text-[11px] text-[#929B9E]">
+            <span className="flex items-center space-x-1.5 truncate mr-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D97943] shrink-0" />
+              <span className="truncate">
+                <strong className="text-[#E7E9E8] font-medium">{topActiveOverlay.shortName}</strong> rendered on top
+              </span>
             </span>
+            <button
+              type="button"
+              onClick={() => toggleOverlay(topActiveOverlay.id)}
+              className="text-[10px] font-mono text-[#D97943] hover:underline shrink-0"
+              title={`Hide ${topActiveOverlay.shortName}`}
+            >
+              Hide
+            </button>
           </div>
         )}
       </section>
