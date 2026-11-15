@@ -22,6 +22,7 @@ import { JEZ_CTX, VIKING_MDIM21, MOLA_CLRSHADE } from "@/lib/data/mars-datasets"
 import { usePlannerStore } from "@/lib/state/planner-store";
 import { formatLonLat } from "@/lib/domain/mars-math";
 import type { LonLat, Strategy } from "@/lib/domain/types";
+import { MapLegend } from "@/components/map/MapLegend";
 import {
   Crosshair,
   ZoomIn,
@@ -542,6 +543,9 @@ export default function PlannerMap() {
         <Radio className="w-3 h-3 animate-pulse" />
         <span>SIMULATED TRAJECTORY (ROVER TRANSECT)</span>
       </div>
+
+      {/* Route & Map Legend Overlay */}
+      <MapLegend mode="planner" className="bottom-14 right-4" />
 
       {/* Bottom Telemetry Status Bar */}
       <div className="absolute bottom-4 right-4 z-20 px-3 py-1.5 rounded bg-[#090A0C]/90 border border-[#17191D] text-[11px] font-mono text-[#777C83] flex items-center space-x-3 backdrop-blur-md">

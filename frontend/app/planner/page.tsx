@@ -7,6 +7,8 @@ import {
   ChevronDown,
   ChevronUp,
   LineChart,
+  Map as MapIcon,
+  Box,
 } from "lucide-react";
 
 import { usePlannerStore } from "@/lib/state/planner-store";
@@ -14,11 +16,14 @@ import PlannerMap from "@/components/planner/PlannerMap";
 import PlannerStepper from "@/components/planner/PlannerStepper";
 import ElevationChart from "@/components/planner/ElevationChart";
 import RouteComparisonTable from "@/components/planner/RouteComparisonTable";
+import MarsSimulationView from "@/components/simulation/MarsSimulationView";
 
 export default function PlannerPage() {
   const terrain = usePlannerStore((s) => s.terrain);
   const initTerrain = usePlannerStore((s) => s.initTerrain);
   const isCalculating = usePlannerStore((s) => s.isCalculating);
+  const viewMode = usePlannerStore((s) => s.viewMode);
+  const setViewMode = usePlannerStore((s) => s.setViewMode);
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
@@ -48,6 +53,32 @@ export default function PlannerPage() {
           </div>
         </div>
 
+        {/* View Mode Switcher: 2D Tactical Map vs 3D Surface Simulation */}
+        <div className="flex items-center bg-[#17191D] p-1 rounded-xl border border-[#777C83]/30 shadow-inner">
+          <button
+            onClick={() => setViewMode("2d")}
+            className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center space-x-1.5 transition-all ${
+              viewMode === "2d"
+                ? "bg-[#C66B3D] text-white shadow-md"
+                : "text-[#777C83] hover:text-[#E8E5DF]"
+            }`}
+          >
+            <MapIcon className="w-3.5 h-3.5" />
+            <span>2D Tactical Map</span>
+          </button>
+          <button
+            onClick={() => setViewMode("3d")}
+            className={`px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider flex items-center space-x-1.5 transition-all ${
+              viewMode === "3d"
+                ? "bg-[#E9A16A] text-[#090A0C] font-bold shadow-md"
+                : "text-[#777C83] hover:text-[#E8E5DF]"
+            }`}
+          >
+            <Box className="w-3.5 h-3.5" />
+            <span>3D Simulation</span>
+          </button>
+        </div>
+
         {/* Right Status Badges */}
         <div className="flex items-center space-x-3 text-xs">
           <Link
@@ -56,7 +87,7 @@ export default function PlannerPage() {
           >
             <span>← Dataset Visualizer</span>
           </Link>
-          <span className="px-2.5 py-1 rounded bg-[#17191D] border border-[#777C83]/30 text-[#E9A16A] font-mono text-[11px] hidden sm:inline-block">
+          <span className="px-2.5 py-1 rounded bg-[#17191D] border border-[#777C83]/30 text-[#E9A16A] font-mono text-[11px] hidden lg:inline-block">
             {terrain.status === "ready"
               ? "TERRAIN: 100% REAL USGS DTM (20m)"
               : "INITIALIZING ELEVATION DTM..."}
@@ -64,65 +95,79 @@ export default function PlannerPage() {
         </div>
       </header>
 
-      {/* 2. Main Workspace */}
+      {/* 2. Main Workspace Layout */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden relative">
-        {/* Left Guided Sidebar: Step-by-Step Workflow */}
-        <aside className="w-full lg:w-[460px] xl:w-[480px] shrink-0 border-b lg:border-b-0 lg:border-r border-[#17191D] bg-[#090A0C] p-4 sm:p-5 flex flex-col overflow-y-auto z-20 shadow-2xl">
+        {/* Left Guided Sidebar: Step-by-Step Workflow (Collapsible when in 3D full immersion) */}
+        <aside
+          className={`shrink-0 border-b lg:border-b-0 lg:border-r border-[#17191D] bg-[#090A0C] p-4 sm:p-5 flex flex-col overflow-y-auto z-20 shadow-2xl transition-all duration-300 ${
+            viewMode === "3d"
+              ? "w-full lg:w-[380px] xl:w-[400px] hidden md:flex"
+              : "w-full lg:w-[460px] xl:w-[480px] flex"
+          }`}
+        >
           <PlannerStepper />
         </aside>
 
         {/* Right Main Map & Telemetry Canvas */}
         <main className="flex-1 flex flex-col relative bg-[#090A0C] overflow-hidden">
-          {/* Interactive OpenLayers Map Viewport */}
-          <div className="flex-1 relative w-full h-full min-h-[460px]">
-            <PlannerMap />
-
-            {/* Pathfinding In-Progress Toast */}
-            {isCalculating && (
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#17191D]/90 backdrop-blur-md border border-[#E9A16A] px-4 py-2 rounded-full text-xs font-mono text-[#E9A16A] flex items-center space-x-2.5 shadow-2xl z-30">
-                <div className="w-2.5 h-2.5 rounded-full bg-[#E9A16A] animate-ping" />
-                <span>Computing Multi-Objective A* Paths on Jezero Topography...</span>
-              </div>
-            )}
-          </div>
-
-          {/* 3. Bottom Telemetry Drawer (Collapsible) */}
-          <div className="border-t border-[#17191D] bg-[#090A0C] z-20 flex flex-col shadow-2xl">
-            <div
-              onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-              className="px-4 py-2.5 bg-[#17191D]/60 hover:bg-[#17191D]/90 transition-colors border-b border-[#17191D] flex items-center justify-between text-xs cursor-pointer select-none"
-            >
-              <div className="flex items-center space-x-2.5">
-                <LineChart className="w-4 h-4 text-[#E9A16A]" />
-                <span className="font-semibold uppercase tracking-wider text-[#E8E5DF]">
-                  Elevation Cross-Section & Numerical Telemetry
-                </span>
-                <span className="text-[10px] text-[#777C83] font-mono hidden sm:inline">
-                  (Shortest vs Survival vs Minimum Energy vs Science)
-                </span>
-              </div>
-              <button
-                className="text-xs text-[#777C83] hover:text-[#E8E5DF] flex items-center space-x-1 focus:outline-none"
-                aria-label={isDrawerOpen ? "Collapse Drawer" : "Expand Drawer"}
-              >
-                <span className="text-[11px] font-mono">
-                  {isDrawerOpen ? "Hide Telemetry" : "Inspect Raw Profile"}
-                </span>
-                {isDrawerOpen ? (
-                  <ChevronDown className="w-4 h-4 text-[#E9A16A]" />
-                ) : (
-                  <ChevronUp className="w-4 h-4 text-[#E9A16A]" />
-                )}
-              </button>
+          {/* Main Viewport: Either 3D Simulation View or 2D OpenLayers Map */}
+          {viewMode === "3d" ? (
+            <div className="flex-1 relative w-full h-full min-h-[460px]">
+              <MarsSimulationView />
             </div>
+          ) : (
+            <div className="flex-1 relative w-full h-full min-h-[460px]">
+              <PlannerMap />
 
-            {isDrawerOpen && (
-              <div className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-4 max-h-72 overflow-y-auto">
-                <ElevationChart />
-                <RouteComparisonTable />
+              {/* Pathfinding In-Progress Toast */}
+              {isCalculating && (
+                <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-[#17191D]/90 backdrop-blur-md border border-[#E9A16A] px-4 py-2 rounded-full text-xs font-mono text-[#E9A16A] flex items-center space-x-2.5 shadow-2xl z-30">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#E9A16A] animate-ping" />
+                  <span>Computing Multi-Objective A* Paths on Jezero Topography...</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 3. Bottom Telemetry Drawer (in 2D mode) */}
+          {viewMode === "2d" && (
+            <div className="border-t border-[#17191D] bg-[#090A0C] z-20 flex flex-col shadow-2xl">
+              <div
+                onClick={() => setIsDrawerOpen(!isDrawerOpen)}
+                className="px-4 py-2.5 bg-[#17191D]/60 hover:bg-[#17191D]/90 transition-colors border-b border-[#17191D] flex items-center justify-between text-xs cursor-pointer select-none"
+              >
+                <div className="flex items-center space-x-2.5">
+                  <LineChart className="w-4 h-4 text-[#E9A16A]" />
+                  <span className="font-semibold uppercase tracking-wider text-[#E8E5DF]">
+                    Elevation Cross-Section & Numerical Telemetry
+                  </span>
+                  <span className="text-[10px] text-[#777C83] font-mono hidden sm:inline">
+                    (Shortest vs Survival vs Minimum Energy vs Science)
+                  </span>
+                </div>
+                <button
+                  className="text-xs text-[#777C83] hover:text-[#E8E5DF] flex items-center space-x-1 focus:outline-none"
+                  aria-label={isDrawerOpen ? "Collapse Drawer" : "Expand Drawer"}
+                >
+                  <span className="text-[11px] font-mono">
+                    {isDrawerOpen ? "Hide Telemetry" : "Inspect Raw Profile"}
+                  </span>
+                  {isDrawerOpen ? (
+                    <ChevronDown className="w-4 h-4 text-[#E9A16A]" />
+                  ) : (
+                    <ChevronUp className="w-4 h-4 text-[#E9A16A]" />
+                  )}
+                </button>
               </div>
-            )}
-          </div>
+
+              {isDrawerOpen && (
+                <div className="p-4 grid grid-cols-1 xl:grid-cols-2 gap-4 max-h-72 overflow-y-auto">
+                  <ElevationChart />
+                  <RouteComparisonTable />
+                </div>
+              )}
+            </div>
+          )}
         </main>
       </div>
     </div>

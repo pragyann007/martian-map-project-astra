@@ -9,11 +9,29 @@ import VectorSource from "ol/source/Vector";
 import Feature from "ol/Feature";
 import Point from "ol/geom/Point";
 import { fromExtent } from "ol/geom/Polygon";
-import { Style, Stroke, Fill, Text, Circle as CircleStyle } from "ol/style";
+import { Style, Stroke, Fill, Text, Circle as CircleStyle, Icon } from "ol/style";
 import Graticule from "ol/layer/Graticule";
 import ScaleLine from "ol/control/ScaleLine";
 import { defaults as defaultControls } from "ol/control/defaults";
 import "ol/ol.css";
+import { MapLegend } from "@/components/map/MapLegend";
+
+function createVisualizerRoverSvg(color: string): string {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+    <circle cx="18" cy="18" r="16" fill="rgba(9,10,12,0.85)" stroke="${color}" stroke-width="2"/>
+    <rect x="12" y="12" width="12" height="13" rx="2" fill="${color}" stroke="#17191D" stroke-width="1"/>
+    <rect x="13.5" y="14" width="9" height="7" rx="1" fill="#1E3A8A"/>
+    <circle cx="18" cy="10" r="2.5" fill="#38BDF8" stroke="#17191D" stroke-width="0.8"/>
+    <line x1="18" y1="12" x2="18" y2="10" stroke="${color}" stroke-width="1.5"/>
+    <rect x="8.5" y="10.5" width="2.5" height="4.5" rx="1" fill="#52525B"/>
+    <rect x="8.5" y="16" width="2.5" height="4.5" rx="1" fill="#52525B"/>
+    <rect x="8.5" y="21.5" width="2.5" height="4.5" rx="1" fill="#52525B"/>
+    <rect x="25" y="10.5" width="2.5" height="4.5" rx="1" fill="#52525B"/>
+    <rect x="25" y="16" width="2.5" height="4.5" rx="1" fill="#52525B"/>
+    <rect x="25" y="21.5" width="2.5" height="4.5" rx="1" fill="#52525B"/>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
 
 import {
   MARS_DATASETS,
@@ -303,15 +321,28 @@ export default function MapContainer() {
           return undefined;
         }
 
-        const baseColor = isSelected
-          ? "#D97943"
-          : isLanding
-          ? "#D97943"
-          : "#E7E9E8";
+        if (isLanding) {
+          return new Style({
+            image: new Icon({
+              src: createVisualizerRoverSvg(isSelected ? "#E9A16A" : "#D97943"),
+              scale: 0.9,
+              anchor: [0.5, 0.5],
+            }),
+            text: new Text({
+              text: `${feature.get("name")} (Perseverance)`,
+              font: "bold 11px sans-serif",
+              fill: new Fill({ color: "#E9A16A" }),
+              stroke: new Stroke({ color: "#0B0D0E", width: 3 }),
+              offsetY: -22,
+            }),
+          });
+        }
+
+        const baseColor = isSelected ? "#D97943" : "#E7E9E8";
 
         return new Style({
           image: new CircleStyle({
-            radius: isSelected ? 6.5 : isLanding ? 5 : 3.5,
+            radius: isSelected ? 6.5 : 3.5,
             fill: new Fill({ color: baseColor }),
             stroke: new Stroke({
               color: "#0B0D0E",
@@ -768,6 +799,9 @@ export default function MapContainer() {
           )}
         </div>
       </div>
+
+      {/* Map Legend Overlay */}
+      <MapLegend mode="visualizer" className="bottom-14 right-4" />
     </div>
   );
 }
