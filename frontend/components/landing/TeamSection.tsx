@@ -1,11 +1,13 @@
 "use client";
 
+import Image from "next/image";
 import { Crown, Sparkles, Users, Compass } from "lucide-react";
 
 interface TeamMember {
   id: string;
   name: string;
   initials: string;
+  image?: string;
   isOwner?: boolean;
   avatarGradient: string;
   ringColor: string;
@@ -18,6 +20,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     id: "prince-timilsina",
     name: "Prince Timilsina",
     initials: "PT",
+    image: "/assets/members/prince-timalsina.png",
     isOwner: true,
     avatarGradient: "from-[#E96A3D] via-[#C66B3D] to-[#8C3A16]",
     ringColor: "border-[#E96A3D] shadow-[0_0_25px_rgba(233,106,61,0.6)]",
@@ -28,6 +31,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     id: "pragyan-thapaliya",
     name: "Pragyan Thapaliya",
     initials: "PT",
+    image: "/assets/members/pragyan-thapaliya.jpg",
     avatarGradient: "from-[#2A3B50] via-[#1E293B] to-[#0F172A]",
     ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
     accentColor: "text-white/80",
@@ -37,6 +41,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     id: "prabhat-dhoj-tulachan",
     name: "Prabhat Dhoj Tulachan",
     initials: "PD",
+    image: "/assets/members/prabhat.jpg",
     avatarGradient: "from-[#332211] via-[#1E1B18] to-[#0D0B0A]",
     ringColor: "border-white/30 group-hover:border-[#E96A3D]/80 group-hover:shadow-[0_0_15px_rgba(233,106,61,0.35)]",
     accentColor: "text-white/80",
@@ -46,6 +51,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     id: "yug-pradhan",
     name: "Yug Pradhan",
     initials: "YP",
+    image: "/assets/members/yug-pradhan.jpeg",
     avatarGradient: "from-[#1F2937] via-[#111827] to-[#030712]",
     ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
     accentColor: "text-white/80",
@@ -55,6 +61,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     id: "dripshak-bachhar",
     name: "Dripshak Bachhar",
     initials: "DB",
+    image: "/assets/members/dripsak.jpg",
     avatarGradient: "from-[#2E1A47] via-[#1A102E] to-[#0B0614]",
     ringColor: "border-white/30 group-hover:border-[#E96A3D]/80 group-hover:shadow-[0_0_15px_rgba(233,106,61,0.35)]",
     accentColor: "text-white/80",
@@ -64,6 +71,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     id: "rijan-maharjan",
     name: "Rijan Maharjan",
     initials: "RM",
+    image: "/assets/members/rijan-maharjan.jpg",
     avatarGradient: "from-[#1A2E26] via-[#0E1C17] to-[#050C0A]",
     ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
     accentColor: "text-white/80",
@@ -133,20 +141,29 @@ export function TeamSection() {
                 {/* Circular Profile Avatar */}
                 <div className="relative shrink-0">
                   <div
-                    className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full border-2 bg-gradient-to-br ${member.avatarGradient} ${member.ringColor} flex items-center justify-center transition-all duration-300 group-hover:scale-105 relative overflow-hidden`}
+                    className={`w-18 h-18 sm:w-20 sm:h-20 rounded-full border-2 bg-gradient-to-br ${member.avatarGradient} ${member.ringColor} relative overflow-hidden transition-all duration-300 group-hover:scale-105 flex items-center justify-center`}
                   >
-                    {/* Subtle astronaut visor reflection overlay */}
-                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none" />
+                    {member.image ? (
+                      <Image
+                        src={member.image}
+                        alt={member.name}
+                        fill
+                        className="object-cover object-center group-hover:scale-110 transition-transform duration-300"
+                        sizes="(max-width: 640px) 72px, 80px"
+                      />
+                    ) : (
+                      <span className="text-xl sm:text-2xl font-heading font-black text-white tracking-widest drop-shadow-md">
+                        {member.initials}
+                      </span>
+                    )}
 
-                    {/* Member Initials */}
-                    <span className="text-xl sm:text-2xl font-heading font-black text-white tracking-widest drop-shadow-md">
-                      {member.initials}
-                    </span>
+                    {/* Subtle astronaut visor reflection overlay */}
+                    <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none z-10" />
                   </div>
 
                   {/* Owner badge icon overlay on avatar */}
                   {member.isOwner && (
-                    <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#E96A3D] border border-white flex items-center justify-center text-white shadow-md">
+                    <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-[#E96A3D] border border-white flex items-center justify-center text-white shadow-md z-20">
                       <Crown className="w-3.5 h-3.5" />
                     </div>
                   )}
