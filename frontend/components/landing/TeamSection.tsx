@@ -21,6 +21,7 @@ interface TeamMember {
   ringColor: string;
   accentColor: string;
   linkedin: string;
+  role: string;
 }
 
 const TEAM_MEMBERS: TeamMember[] = [
@@ -34,6 +35,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     ringColor: "border-[#E96A3D] shadow-[0_0_25px_rgba(233,106,61,0.6)]",
     accentColor: "text-[#E9A16A]",
     linkedin: "https://www.linkedin.com/in/princetimilsina/",
+    role: "PROJECT ASTRA // LEADER & DEVELOPER",
   },
   {
     id: "pragyan-thapaliya",
@@ -44,6 +46,18 @@ const TEAM_MEMBERS: TeamMember[] = [
     ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
     accentColor: "text-white/80",
     linkedin: "https://www.linkedin.com/in/pragyann/",
+    role: "PROJECT ASTRA // PRODUCT DEVELOPMENT",
+  },
+   {
+    id: "rijan-maharjan",
+    name: "Rijan Maharjan",
+    initials: "RM",
+    image: "/assets/members/rijan-maharjan.jpg",
+    avatarGradient: "from-[#1A2E26] via-[#0E1C17] to-[#050C0A]",
+    ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
+    accentColor: "text-white/80",
+    linkedin: "https://www.linkedin.com/in/rijan-maharjan-862274331/",
+    role: "PROJECT ASTRA // PRODUCT DEVELOPMENT",
   },
   {
     id: "prabhat-dhoj-tulachan",
@@ -54,6 +68,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     ringColor: "border-white/30 group-hover:border-[#E96A3D]/80 group-hover:shadow-[0_0_15px_rgba(233,106,61,0.35)]",
     accentColor: "text-white/80",
     linkedin: "https://www.linkedin.com/in/prabhat-d-tulachan-0901b2307/",
+    role: "PROJECT ASTRA // PRODUCT RESEARCH",
   },
   {
     id: "yug-pradhan",
@@ -64,6 +79,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
     accentColor: "text-white/80",
     linkedin: "https://www.linkedin.com/in/yug-pradhan-273176321/",
+    role: "PROJECT ASTRA // PRODUCT RESEARCH & DEVELOPMENT",
   },
   {
     id: "dripshak-bachhar",
@@ -74,17 +90,9 @@ const TEAM_MEMBERS: TeamMember[] = [
     ringColor: "border-white/30 group-hover:border-[#E96A3D]/80 group-hover:shadow-[0_0_15px_rgba(233,106,61,0.35)]",
     accentColor: "text-white/80",
     linkedin: "https://www.linkedin.com/in/dripshak-bachhar-291498326/",
+    role: "PROJECT ASTRA // PRODUCT RESEARCH",
   },
-  {
-    id: "rijan-maharjan",
-    name: "Rijan Maharjan",
-    initials: "RM",
-    image: "/assets/members/rijan-maharjan.jpg",
-    avatarGradient: "from-[#1A2E26] via-[#0E1C17] to-[#050C0A]",
-    ringColor: "border-white/30 group-hover:border-[#E9A16A]/80 group-hover:shadow-[0_0_15px_rgba(233,161,106,0.35)]",
-    accentColor: "text-white/80",
-    linkedin: "https://www.linkedin.com/in/rijan-maharjan-862274331/",
-  },
+ 
 ];
 
 export function TeamSection() {
@@ -205,7 +213,7 @@ export function TeamSection() {
                   </div>
 
                   <div className="text-xs font-mono text-[#E8E5DF]/70 tracking-wider uppercase">
-                    PROJECT ASTRA // RESEARCH & EXPLORATION
+                    {member.role}
                   </div>
                 </div>
               </div>
