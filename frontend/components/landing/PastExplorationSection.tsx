@@ -1,9 +1,5 @@
 "use client";
 
-import { useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 import {
   ExternalLink,
   Radio,
@@ -19,21 +15,22 @@ import {
   Shield,
   Gauge,
   Flame,
+  CheckCircle2,
+  Calendar,
 } from "lucide-react";
-
-gsap.registerPlugin(ScrollTrigger);
 
 interface TimelineItem {
   id: string;
   number: string;
   year: string;
-  title: string;
+  heading: string;
   spacecraft: string;
   agency: string;
   milestone: string;
   impact: string;
   icon: typeof Radio;
   telemetry: string;
+  badge: string;
 }
 
 const HISTORICAL_TIMELINE: TimelineItem[] = [
@@ -41,7 +38,7 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
     id: "mariner-4",
     number: "01",
     year: "1964",
-    title: "The First Flyby",
+    heading: "The First Flyby — Mariner 4 (NASA)",
     spacecraft: "Mariner 4",
     agency: "NASA",
     milestone: "Captured the first close-up photographs of another planet.",
@@ -49,12 +46,13 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
       'Sent back 21 grainy images revealing a cratered, desert-like world rather than artificial "canals."',
     icon: Radio,
     telemetry: "Closest Approach: 9,846 km // 21 Telemetry Frames",
+    badge: "FIRST PLANETARY FLYBY",
   },
   {
     id: "mariner-9-mars-3",
     number: "02",
     year: "1971",
-    title: "First Orbit & Soft Landing",
+    heading: "First Orbit & Soft Landing — Mariner 9 (NASA) & Mars 3 (USSR)",
     spacecraft: "Mariner 9 & Mars 3",
     agency: "NASA & USSR",
     milestone:
@@ -63,12 +61,13 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
       "The Soviet Mars 3 achieved the first soft touchdown on Martian soil before losing contact after approximately 20 seconds.",
     icon: NavIcon,
     telemetry: "7,329 Orbital Photos // First Planetary Soft Landing",
+    badge: "FIRST ORBIT & TOUCHDOWN",
   },
   {
     id: "viking-1-2",
     number: "03",
     year: "1976",
-    title: "First Long-Term Surface Labs",
+    heading: "First Long-Term Surface Labs — Viking 1 & 2 (NASA)",
     spacecraft: "Viking 1 & 2",
     agency: "NASA",
     milestone:
@@ -77,12 +76,13 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
       "Captured the first clear color panoramas from the surface and conducted biology experiments on Martian soil.",
     icon: Activity,
     telemetry: "6+ Years Surface Ops // Biological Soil Gas Chromatograph",
+    badge: "FIRST SURFACE LABORATORIES",
   },
   {
     id: "pathfinder-sojourner",
     number: "04",
     year: "1997",
-    title: "The First Wheeled Rover",
+    heading: "The First Wheeled Rover — Mars Pathfinder & Sojourner (NASA)",
     spacecraft: "Mars Pathfinder & Sojourner",
     agency: "NASA",
     milestone: "Deployed Sojourner, a microwave-sized, six-wheeled rover.",
@@ -90,12 +90,13 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
       "Demonstrated that mobile robots could navigate rocky Martian terrain and independently analyze rocks.",
     icon: Compass,
     telemetry: "11.5 kg Mass // Alpha Proton X-Ray Spectrometer (APXS)",
+    badge: "FIRST WHEELED ROBOTIC ROVER",
   },
   {
     id: "water-and-interior",
     number: "05",
     year: "2004–2018",
-    title: "Water & Deep Interior",
+    heading: "Water & Deep Interior — Spirit, Opportunity, Phoenix & InSight (NASA)",
     spacecraft: "Spirit, Opportunity, Phoenix & InSight",
     agency: "NASA",
     milestone:
@@ -104,6 +105,7 @@ const HISTORICAL_TIMELINE: TimelineItem[] = [
       "Their discoveries provided evidence of ancient liquid water. Phoenix uncovered subsurface water ice in 2008, while InSight studied the Martian interior and recorded more than 1,300 marsquakes.",
     icon: Layers,
     telemetry: "14+ Yrs Traverse // SEIS Recorded 1,300+ Marsquakes",
+    badge: "WATER EVIDENCE & SEISMOLOGY",
   },
 ];
 
@@ -159,91 +161,10 @@ const PERSEVERANCE_FACTS: PerseveranceFact[] = [
 ];
 
 export function PastExplorationSection() {
-  const sectionRef = useRef<HTMLElement>(null);
-  const headingRef = useRef<HTMLDivElement>(null);
-  const timelineRef = useRef<HTMLDivElement>(null);
-  const spotlightRef = useRef<HTMLDivElement>(null);
-  const factsRef = useRef<HTMLDivElement>(null);
-
-  useGSAP(
-    () => {
-      const prefersReduced = window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
-      ).matches;
-      if (prefersReduced) return;
-
-      // Section title entrance
-      if (headingRef.current) {
-        gsap.from(headingRef.current, {
-          scrollTrigger: {
-            trigger: headingRef.current,
-            start: "top 85%",
-            toggleActions: "play none none reverse",
-          },
-          x: -120,
-          opacity: 0,
-          duration: 1.1,
-          ease: "power3.out",
-        });
-      }
-
-      // Timeline cards staggered reveal
-      const timelineCards = timelineRef.current?.querySelectorAll(".timeline-card");
-      if (timelineCards && timelineCards.length > 0) {
-        gsap.from(timelineCards, {
-          scrollTrigger: {
-            trigger: timelineRef.current,
-            start: "top 80%",
-            toggleActions: "play none none reverse",
-          },
-          y: 60,
-          opacity: 0,
-          stagger: 0.15,
-          duration: 0.9,
-          ease: "power3.out",
-        });
-      }
-
-      // Perseverance spotlight reveal
-      if (spotlightRef.current) {
-        gsap.from(spotlightRef.current, {
-          scrollTrigger: {
-            trigger: spotlightRef.current,
-            start: "top 80%",
-            toggleActions: "play none none reverse",
-          },
-          y: 50,
-          opacity: 0,
-          duration: 1.0,
-          ease: "power3.out",
-        });
-      }
-
-      // Fact cards staggered reveal
-      const factCards = factsRef.current?.querySelectorAll(".fact-card");
-      if (factCards && factCards.length > 0) {
-        gsap.from(factCards, {
-          scrollTrigger: {
-            trigger: factsRef.current,
-            start: "top 80%",
-            toggleActions: "play none none reverse",
-          },
-          y: 40,
-          opacity: 0,
-          stagger: 0.1,
-          duration: 0.8,
-          ease: "power3.out",
-        });
-      }
-    },
-    { scope: sectionRef }
-  );
-
   return (
     <section
       id="past-exploration"
-      ref={sectionRef}
-      className="relative w-full py-36 bg-transparent border-t border-white/20 overflow-hidden"
+      className="relative w-full py-32 bg-transparent border-t border-white/20 text-[#E8E5DF]"
     >
       <div className="max-w-6xl mx-auto px-6 sm:px-10">
         {/* Section Tag with clean dividers */}
@@ -258,11 +179,15 @@ export function PastExplorationSection() {
         </div>
         <div className="w-full border-b border-white/30" />
 
-        {/* Section Heading & Subtitle */}
-        <div ref={headingRef} className="pt-16 pb-16 max-w-4xl space-y-5">
-          <h2 className="text-4xl sm:text-6xl lg:text-7xl font-heading font-black uppercase tracking-tight text-[#FFFFFF] leading-[1.05]">
+        {/* Section Heading & Subtitle (Always 100% visible) */}
+        <div className="pt-16 pb-16 max-w-4xl space-y-5">
+          <div className="inline-flex items-center px-3 py-1 rounded-xs bg-[#E96A3D]/15 border border-[#E96A3D]/40 text-xs font-mono uppercase tracking-[0.2em] text-[#E9A16A]">
+            <Calendar className="w-3.5 h-3.5 mr-2" />
+            <span>HISTORICAL ARCHIVES // 1964 — PRESENT</span>
+          </div>
+          <h2 className="text-4xl sm:text-6xl lg:text-7xl font-heading font-black uppercase tracking-tight text-white leading-[1.05]">
             Past Exploration: <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E96A3D] via-[#E9A16A] to-[#FFFFFF]">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#E96A3D] via-[#E9A16A] to-white">
               Humanity&apos;s Journey to the Red Planet
             </span>
           </h2>
@@ -278,12 +203,12 @@ export function PastExplorationSection() {
         <div className="pt-4 pb-20">
           <div className="flex items-center space-x-3 pb-8 text-xs font-heading font-semibold uppercase tracking-[0.2em] text-[#E9A16A]">
             <Compass className="w-4 h-4 text-[#E96A3D]" />
-            <span>HISTORICAL MILESTONES (1964–2018)</span>
+            <span>PART 1 — HISTORICAL TIMELINE (1964–2018)</span>
           </div>
 
-          <div ref={timelineRef} className="relative">
+          <div className="relative">
             {/* Continuous Vertical Connecting Line */}
-            <div className="hidden md:block absolute left-[29px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-[#E96A3D] via-[#E9A16A]/50 to-[#C66B3D]/20 z-0" />
+            <div className="hidden md:block absolute left-[31px] top-8 bottom-8 w-0.5 bg-gradient-to-b from-[#E96A3D] via-[#E9A16A]/50 to-[#C66B3D]/30 z-0" />
 
             <div className="space-y-8 relative z-10">
               {HISTORICAL_TIMELINE.map((item) => {
@@ -291,25 +216,25 @@ export function PastExplorationSection() {
                 return (
                   <div
                     key={item.id}
-                    className="timeline-card group relative grid grid-cols-1 md:grid-cols-12 gap-6 p-6 sm:p-8 rounded-sm bg-[#090A0C]/90 backdrop-blur-md border border-white/20 hover:border-[#E96A3D]/70 transition-all duration-300 shadow-2xl hover:shadow-[#E96A3D]/10"
+                    className="timeline-card group relative grid grid-cols-1 md:grid-cols-12 gap-6 p-6 sm:p-8 rounded-sm bg-[#090A0C]/90 backdrop-blur-md border border-white/20 hover:border-[#E96A3D]/80 transition-all duration-300 shadow-2xl hover:shadow-[#E96A3D]/10"
                   >
                     {/* Left node & prominent date column */}
                     <div className="md:col-span-3 flex md:flex-col items-center md:items-start justify-between md:justify-start gap-4 border-b md:border-b-0 md:border-r border-white/15 pb-4 md:pb-0 md:pr-6">
                       <div className="flex items-center space-x-3">
-                        <div className="w-12 h-12 rounded-sm bg-white/5 border border-white/25 flex items-center justify-center text-[#E9A16A] group-hover:bg-[#E96A3D]/15 group-hover:border-[#E96A3D] transition-colors">
-                          <Icon className="w-5 h-5" />
+                        <div className="w-12 h-12 rounded-sm bg-white/5 border border-white/25 flex items-center justify-center text-[#E9A16A] group-hover:bg-[#E96A3D]/20 group-hover:border-[#E96A3D] transition-colors shrink-0">
+                          <Icon className="w-6 h-6" />
                         </div>
                         <div>
-                          <div className="text-[11px] font-mono text-[#E9A16A] uppercase tracking-wider">
-                            MISSION {item.number}
+                          <div className="text-[11px] font-mono text-[#E9A16A] uppercase tracking-wider font-semibold">
+                            MILESTONE {item.number}
                           </div>
-                          <div className="text-2xl sm:text-3xl font-heading font-bold text-white tracking-tight">
+                          <div className="text-2xl sm:text-3xl font-heading font-black text-white tracking-tight">
                             {item.year}
                           </div>
                         </div>
                       </div>
 
-                      <div className="inline-flex items-center px-2.5 py-1 rounded-xs text-[10px] uppercase font-mono tracking-wider bg-white/5 text-[#E8E5DF] border border-white/15">
+                      <div className="inline-flex items-center px-2.5 py-1 rounded-xs text-[10px] uppercase font-mono tracking-wider bg-white/5 text-[#E9A16A] border border-white/15 font-semibold">
                         {item.agency}
                       </div>
                     </div>
@@ -317,32 +242,36 @@ export function PastExplorationSection() {
                     {/* Right content column */}
                     <div className="md:col-span-9 space-y-4">
                       <div>
-                        <div className="text-xs uppercase tracking-widest text-[#E9A16A] font-medium">
-                          {item.spacecraft}
+                        <div className="text-xs uppercase font-mono tracking-widest text-[#E9A16A] font-semibold">
+                          {item.badge}
                         </div>
-                        <h3 className="text-xl sm:text-2xl font-heading font-bold text-white">
-                          {item.title}
+                        <h3 className="text-xl sm:text-2xl font-heading font-bold text-white tracking-tight pt-1">
+                          {item.heading}
                         </h3>
                       </div>
 
-                      <div className="space-y-3 text-sm sm:text-base text-[#E8E5DF] leading-relaxed">
-                        <div className="p-3.5 rounded-sm bg-white/5 border border-white/10 space-y-1">
-                          <div className="text-[11px] font-mono uppercase tracking-wider text-[#E9A16A] font-semibold">
-                            Primary Milestone:
+                      <div className="space-y-3 text-sm sm:text-base leading-relaxed">
+                        {/* Milestone details */}
+                        <div className="p-4 rounded-sm bg-white/[0.04] border border-white/10 space-y-1">
+                          <div className="text-[11px] font-mono uppercase tracking-wider text-[#E9A16A] font-bold flex items-center space-x-1.5">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-[#E96A3D]" />
+                            <span>Mission Milestone:</span>
                           </div>
-                          <p className="text-[#FFFFFF]">{item.milestone}</p>
+                          <p className="text-white font-medium pl-5">{item.milestone}</p>
                         </div>
 
-                        <div className="p-3.5 rounded-sm bg-white/5 border border-white/10 space-y-1">
-                          <div className="text-[11px] font-mono uppercase tracking-wider text-[#E8E5DF]/70 font-semibold">
-                            Planetary Impact:
+                        {/* Scientific impact details */}
+                        <div className="p-4 rounded-sm bg-white/[0.04] border border-white/10 space-y-1">
+                          <div className="text-[11px] font-mono uppercase tracking-wider text-[#E8E5DF]/80 font-bold flex items-center space-x-1.5">
+                            <Sparkles className="w-3.5 h-3.5 text-[#E9A16A]" />
+                            <span>Scientific Impact:</span>
                           </div>
-                          <p className="text-[#E8E5DF]">{item.impact}</p>
+                          <p className="text-[#E8E5DF] pl-5">{item.impact}</p>
                         </div>
                       </div>
 
-                      <div className="pt-2 text-[11px] font-mono text-[#E8E5DF]/60 uppercase tracking-widest flex items-center space-x-2">
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#E96A3D]" />
+                      <div className="pt-2 text-[11px] font-mono text-[#E8E5DF]/70 uppercase tracking-widest flex items-center space-x-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#E96A3D] animate-pulse" />
                         <span>{item.telemetry}</span>
                       </div>
                     </div>
@@ -356,8 +285,8 @@ export function PastExplorationSection() {
         {/* =========================================================================
             PART 2 — FEATURE SPOTLIGHT: PERSEVERANCE ROVER
            ========================================================================= */}
-        <div ref={spotlightRef} className="pt-8 pb-20">
-          <div className="p-8 sm:p-12 rounded-sm bg-[#090A0C]/95 backdrop-blur-md border border-[#E96A3D]/40 shadow-2xl relative overflow-hidden space-y-10">
+        <div className="pt-8 pb-20">
+          <div className="p-8 sm:p-12 rounded-sm bg-[#090A0C]/95 backdrop-blur-md border border-[#E96A3D]/50 shadow-2xl relative overflow-hidden space-y-10">
             {/* Background telemetry accents */}
             <div className="absolute top-0 right-0 -mt-16 -mr-16 w-80 h-80 bg-[#E96A3D]/10 rounded-full blur-3xl pointer-events-none" />
 
@@ -365,7 +294,7 @@ export function PastExplorationSection() {
             <div className="space-y-4 border-b border-white/15 pb-8 relative z-10">
               <div className="inline-flex items-center px-3 py-1 rounded-xs bg-[#E96A3D]/15 border border-[#E96A3D]/40 text-xs font-mono uppercase tracking-[0.2em] text-[#E9A16A]">
                 <Flame className="w-3.5 h-3.5 mr-2" />
-                <span>IN SITU ROBOTIC ASTROBIOLOGY</span>
+                <span>PART 2 — FEATURE SPOTLIGHT</span>
               </div>
               <h3 className="text-3xl sm:text-5xl font-heading font-black uppercase tracking-tight text-white leading-tight">
                 MEET PERSEVERANCE — THE NEXT CHAPTER OF MARTIAN EXPLORATION
@@ -388,33 +317,33 @@ export function PastExplorationSection() {
                 </p>
 
                 {/* Rover Scientific Instruments schematic diagram */}
-                <div className="p-5 rounded-sm bg-black/40 border border-white/15 space-y-3">
+                <div className="p-5 rounded-sm bg-black/50 border border-white/15 space-y-3">
                   <div className="text-xs uppercase font-mono tracking-widest text-[#E9A16A] font-semibold flex items-center justify-between">
                     <span>Active Science Suite Instrumentation</span>
                     <span className="text-[10px] text-white/50">NASA / JPL-CALTECH</span>
                   </div>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-2 text-xs font-mono">
-                    <div className="p-2 rounded bg-white/5 border border-white/10">
+                    <div className="p-2.5 rounded bg-white/5 border border-white/10">
                       <div className="text-white font-bold">Mastcam-Z</div>
                       <div className="text-[10px] text-[#E8E5DF]/70">Stereoscopic Zoom</div>
                     </div>
-                    <div className="p-2 rounded bg-white/5 border border-white/10">
+                    <div className="p-2.5 rounded bg-white/5 border border-white/10">
                       <div className="text-white font-bold">SuperCam</div>
                       <div className="text-[10px] text-[#E8E5DF]/70">Laser Chemistry</div>
                     </div>
-                    <div className="p-2 rounded bg-white/5 border border-white/10">
+                    <div className="p-2.5 rounded bg-white/5 border border-white/10">
                       <div className="text-white font-bold">PIXL & SHERLOC</div>
                       <div className="text-[10px] text-[#E8E5DF]/70">Microbial Organics</div>
                     </div>
-                    <div className="p-2 rounded bg-white/5 border border-white/10">
+                    <div className="p-2.5 rounded bg-white/5 border border-white/10">
                       <div className="text-white font-bold">MOXIE</div>
                       <div className="text-[10px] text-[#E8E5DF]/70">Oxygen Generator</div>
                     </div>
-                    <div className="p-2 rounded bg-white/5 border border-white/10">
+                    <div className="p-2.5 rounded bg-white/5 border border-white/10">
                       <div className="text-white font-bold">RIMFAX</div>
                       <div className="text-[10px] text-[#E8E5DF]/70">Subsurface Radar</div>
                     </div>
-                    <div className="p-2 rounded bg-white/5 border border-white/10">
+                    <div className="p-2.5 rounded bg-white/5 border border-white/10">
                       <div className="text-white font-bold">MEDA</div>
                       <div className="text-[10px] text-[#E8E5DF]/70">Atmosphere Sensors</div>
                     </div>
@@ -442,7 +371,7 @@ export function PastExplorationSection() {
                 </div>
 
                 {/* Card 1: Current Location */}
-                <div className="p-5 rounded-sm bg-white/5 border border-white/20 hover:border-[#E96A3D]/60 transition-colors space-y-1.5">
+                <div className="p-5 rounded-sm bg-white/5 border border-white/20 hover:border-[#E96A3D]/70 transition-colors space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-mono text-[#E9A16A] uppercase tracking-wider">
                     <span className="flex items-center space-x-1.5">
                       <NavIcon className="w-3.5 h-3.5" />
@@ -456,7 +385,7 @@ export function PastExplorationSection() {
                 </div>
 
                 {/* Card 2: Distance Record */}
-                <div className="p-5 rounded-sm bg-white/5 border border-white/20 hover:border-[#E96A3D]/60 transition-colors space-y-1.5">
+                <div className="p-5 rounded-sm bg-white/5 border border-white/20 hover:border-[#E96A3D]/70 transition-colors space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-mono text-[#E9A16A] uppercase tracking-wider">
                     <span className="flex items-center space-x-1.5">
                       <Gauge className="w-3.5 h-3.5" />
@@ -470,7 +399,7 @@ export function PastExplorationSection() {
                 </div>
 
                 {/* Card 3: Size & Power */}
-                <div className="p-5 rounded-sm bg-white/5 border border-white/20 hover:border-[#E96A3D]/60 transition-colors space-y-1.5">
+                <div className="p-5 rounded-sm bg-white/5 border border-white/20 hover:border-[#E96A3D]/70 transition-colors space-y-1.5">
                   <div className="flex items-center justify-between text-[11px] font-mono text-[#E9A16A] uppercase tracking-wider">
                     <span className="flex items-center space-x-1.5">
                       <Shield className="w-3.5 h-3.5" />
@@ -490,10 +419,10 @@ export function PastExplorationSection() {
         {/* =========================================================================
             PART 3 — FIVE THINGS THAT MAKE PERSEVERANCE EXTRAORDINARY
            ========================================================================= */}
-        <div ref={factsRef} className="pt-4 pb-12">
+        <div className="pt-4 pb-12">
           <div className="pb-8 space-y-2">
             <div className="text-xs uppercase tracking-[0.25em] text-[#E9A16A] font-semibold">
-              ENGINEERING & SCIENTIFIC MILESTONES
+              PART 3 — ENGINEERING & SCIENTIFIC MILESTONES
             </div>
             <h3 className="text-2xl sm:text-4xl font-heading font-black uppercase tracking-tight text-white">
               FIVE THINGS THAT MAKE PERSEVERANCE EXTRAORDINARY
@@ -544,4 +473,3 @@ export function PastExplorationSection() {
     </section>
   );
 }
-
