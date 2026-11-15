@@ -1,13 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Space_Grotesk } from "next/font/google";
 import "./globals.css";
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "MARTIAN MAP — Planetary Exploration & Dataset Visualizer | Project Astra",
@@ -37,8 +29,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${spaceGrotesk.variable} dark h-full antialiased`}>
-      <body className="h-full min-h-full flex flex-col bg-[#090A0C] text-[#E8E5DF] selection:bg-[#C66B3D] selection:text-white font-sans">
+    <html
+      lang="en"
+      className="dark h-full antialiased"
+      data-scroll-behavior="smooth"
+      suppressHydrationWarning
+    >
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+        <link
+          href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body
+        className="h-full min-h-full flex flex-col bg-[#090A0C] text-[#E8E5DF] selection:bg-[#C66B3D] selection:text-white font-sans"
+        suppressHydrationWarning
+      >
         {children}
       </body>
     </html>

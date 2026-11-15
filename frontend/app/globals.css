@@ -2,6 +2,7 @@
 
 @layer base {
   :root {
+    --font-space-grotesk: 'Space Grotesk', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --color-obsidian: #090A0C;
     --color-graphite: #17191D;
     --color-mars-rust: #C66B3D;

@@ -1,0 +1,24 @@
+{
+  "schema": 1,
+  "name": "USGS Mars 2020 Jezero Crater CTX DTM (20m)",
+  "productId": "JEZ_ctx_B_soc_008_DTM_MOLAtopography_DeltaGeoid_20m_Eqc_latTs0_lon0",
+  "provider": "USGS Astrogeology / NASA JPL-Caltech / MSSS",
+  "sourceUrl": "https://asc-pds-services.s3.us-west-2.amazonaws.com/mosaic/mars2020_trn/CTX/",
+  "bounds": {
+    "west": 77.16046545922367,
+    "south": 18.211027390963398,
+    "east": 77.6989751662947,
+    "north": 18.721194481872804
+  },
+  "cols": 1596,
+  "rows": 1512,
+  "cellSizeM": 20.0,
+  "elevationUnits": "m",
+  "nodata": -9999.0,
+  "verticalDatum": "MOLA Areoid / Delta Geoid",
+  "minElev": -2710.69580078125,
+  "maxElev": -1515.53955078125,
+  "acquisition": "Mars 2020 Perseverance Terrain Relative Navigation (TRN) Campaign",
+  "license": "Public Domain (NASA / USGS)",
+  "file": "dem.f32"
+}
